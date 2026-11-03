@@ -213,8 +213,10 @@ Built for the Meta Global AI Developer Hackathon. GroundTruth uses Meta Muse Spa
 
 ## License
 
-Copyright (c) 2026 Simon Anandan.  
-This repository's original code is made available under the PolyForm Noncommercial License 1.0.0.  
-See the LICENSE file for the complete license terms.  
-Commercial use requires separate permission from the applicable copyright holder(s).  
-Third-party dependencies, integrations, names, and trademarks remain subject to their respective owners' terms and licenses.
+> Copyright (c) 2026 Simon Anandan.
+>
+> This repository's original code is made available under the PolyForm Noncommercial License 1.0.0.
+> See the LICENSE file for the complete license terms.
+>
+> Commercial use requires separate permission from the applicable copyright holder(s).
+> Third-party dependencies, integrations, names, and trademarks remain subject to their respective owners' terms and licenses.
