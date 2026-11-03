@@ -1,0 +1,47 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# Test and tool caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Runtime data and exports
+*.db
+*.sqlite
+*.sqlite3
+groundtruth.db*
+data/*
+!data/.gitkeep
+groundtruth-exports/
+
+# Logs and editor files
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local planning/spec documents (not committed)
+FOUR_LINE_PITCH.md
+HUMAN_ACTION_CHECKLIST.md
+MASTER_BUILD_PROMPT.md
+GroundTruth_Meta_Hackathon_Build_Pack.md
+
+# Generated demo Git repository and manifest (regenerated at runtime)
+demo-data/*
+!demo-data/.gitkeep

@@ -1,0 +1,83 @@
+{
+  "case_id": "D_insufficient_access",
+  "version": "1.0.0",
+  "demo": true,
+  "label": "D - Insufficient access",
+  "summary": "The live resource exists, but required Scalr and CloudTrail reads are denied. GroundTruth must say it cannot attribute an owner instead of guessing.",
+  "expected": {
+    "status": "INSUFFICIENT_ACCESS",
+    "confidence": "UNKNOWN",
+    "recommendation": "REQUEST_MISSING_READ_PERMISSION",
+    "blocked_adoption": false
+  },
+  "resource": {
+    "provider": "aws",
+    "service": "lambda",
+    "resource_type": "aws_lambda_function",
+    "account_id": "123456789012",
+    "region": "ap-south-1",
+    "name": "payments-settler",
+    "arn": "arn:aws:lambda:ap-south-1:123456789012:function:payments-settler",
+    "provider_id": "payments-settler",
+    "observed_at": "2026-11-02T06:30:00+00:00",
+    "status": "Active",
+    "last_modified_at": "2026-09-30T04:18:00+00:00",
+    "tags": {
+      "Environment": "prod",
+      "Owner": "payments-core",
+      "CostCenter": "CC-3301"
+    },
+    "safe_attributes": {
+      "runtime": "java21",
+      "handler": "com.example.Settler::handleRequest",
+      "memory_size": 1024,
+      "timeout": 45,
+      "package_type": "Zip",
+      "architectures": ["x86_64"],
+      "last_update_status": "Successful",
+      "version": "31",
+      "code_sha256": "c9d1e2f3a4b5c6d7e8f90112233445566778899aabbccddeeff00112233445566",
+      "environment_variable_count": 5
+    },
+    "fixture": true
+  },
+  "aws": {"status": "success"},
+  "scalr": {
+    "status": "permission_denied",
+    "error": "Scalr API returned HTTP 403. The token cannot read resource usage for this account.",
+    "warnings": [
+      "Scalr resource usage could not be read; ownership is unknown from this source.",
+      "Retry with a read-only token that can access the account and workspace."
+    ],
+    "resource_usages": []
+  },
+  "git": null,
+  "cloudtrail": {
+    "status": "permission_denied",
+    "event_history_limited": true,
+    "events": [],
+    "warnings": ["cloudtrail:LookupEvents was denied; management-event history is unavailable."]
+  },
+  "cloudwatch": {
+    "status": "success",
+    "activity": {
+      "window_start": "2026-10-19T00:00:00+00:00",
+      "window_end": "2026-11-02T00:00:00+00:00",
+      "period_seconds": 300,
+      "metric_namespace": "AWS/Lambda",
+      "dimensions": {"FunctionName": "payments-settler"},
+      "total_invocations": 0.0,
+      "total_errors": 0.0,
+      "total_throttles": 0.0,
+      "invocation_datapoints": 0,
+      "error_datapoints": 0,
+      "throttle_datapoints": 0,
+      "no_datapoints": true,
+      "limitations": [
+        "No datapoint returned for a query does not prove the function is unused."
+      ],
+      "fixture": true
+    }
+  },
+  "omni": {"configured": false, "limitations": ["No Omni link configured in fixture mode."]}
+}

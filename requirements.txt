@@ -1,0 +1,10 @@
+boto3==1.43.123
+botocore==1.43.123
+networkx==3.7
+openai==3.42.1
+pandas==3.1.0
+plotly==7.1.0
+pydantic==2.14.2
+python-dotenv==1.2.4
+requests==2.34.2
+streamlit==1.66.1

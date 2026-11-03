@@ -1,0 +1,208 @@
+{
+  "case_id": "E_current_owner",
+  "version": "1.0.0",
+  "demo": true,
+  "label": "E - Current owner found",
+  "summary": "A live Lambda has one exact active Scalr state binding, plus an older historical manager for context.",
+  "expected": {
+    "status": "CURRENT_OWNER_FOUND",
+    "confidence": "HIGH",
+    "recommendation": "INSPECT_CURRENT_WORKSPACE",
+    "blocked_adoption": false
+  },
+  "resource": {
+    "provider": "aws",
+    "service": "lambda",
+    "resource_type": "aws_lambda_function",
+    "account_id": "123456789012",
+    "region": "ap-south-1",
+    "name": "orders-transformer",
+    "arn": "arn:aws:lambda:ap-south-1:123456789012:function:orders-transformer",
+    "provider_id": "orders-transformer",
+    "observed_at": "2026-11-02T06:30:00+00:00",
+    "status": "Active",
+    "last_modified_at": "2026-10-28T14:05:00+00:00",
+    "tags": {
+      "Environment": "prod",
+      "Owner": "platform-orders",
+      "CostCenter": "CC-1042"
+    },
+    "safe_attributes": {
+      "runtime": "python3.13",
+      "handler": "app.handler",
+      "memory_size": 512,
+      "timeout": 30,
+      "package_type": "Zip",
+      "architectures": ["x86_64"],
+      "last_update_status": "Successful",
+      "version": "12",
+      "code_sha256": "7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069",
+      "environment_variable_count": 3
+    },
+    "fixture": true
+  },
+  "aws": {"status": "success"},
+  "scalr": {
+    "status": "success",
+    "queried_filter": "fixture-resource-usage",
+    "resource_usages": [
+      {
+        "id": "usage-current-001",
+        "external_id": "arn:aws:lambda:ap-south-1:123456789012:function:orders-transformer",
+        "address": "module.orders.aws_lambda_function.transformer",
+        "name": "transformer",
+        "is_active": true,
+        "is_duplicate": false,
+        "updated_at": "2026-10-28T14:03:00+00:00",
+        "updated_by_email": "priya.raman@example.com",
+        "account_id": "123456789012",
+        "region": "ap-south-1",
+        "environment": "prod",
+        "workspace": {
+          "id": "ws-orders-prod",
+          "name": "orders-prod",
+          "environment": "prod",
+          "active": true,
+          "vcs_repo_identifier": "platform/data-pipelines",
+          "working_directory": "environments/prod/orders",
+          "branch": "main",
+          "source_url": "https://example.scalr.io/workspaces/ws-orders-prod",
+          "fixture": true
+        },
+        "run": {
+          "id": "run-current-104",
+          "workspace_id": "ws-orders-prod",
+          "status": "applied",
+          "created_at": "2026-10-28T14:01:00+00:00",
+          "source": "vcs",
+          "actor": "user:priya.raman@example.com",
+          "vcs_revision": "$DEMO_HEAD_SHA",
+          "source_url": "https://example.scalr.io/runs/run-current-104",
+          "attributes": {
+            "actor_category": "user",
+            "created_by_email": "priya.raman@example.com",
+            "message": "Refresh orders transformer runtime",
+            "has_changes": true,
+            "is_destroy": false
+          },
+          "fixture": true
+        },
+        "state_version": {
+          "id": "sv-current-104",
+          "created_at": "2026-10-28T14:04:00+00:00",
+          "fixture": true
+        },
+        "fixture": true
+      },
+      {
+        "id": "usage-historical-042",
+        "external_id": "arn:aws:lambda:ap-south-1:123456789012:function:orders-transformer",
+        "address": "module.legacy.aws_lambda_function.orders_transformer",
+        "name": "orders_transformer",
+        "is_active": false,
+        "is_duplicate": false,
+        "updated_at": "2026-09-08T10:20:00+00:00",
+        "updated_by_email": "arjun.mehta@example.com",
+        "account_id": "123456789012",
+        "region": "ap-south-1",
+        "environment": "prod",
+        "workspace": {
+          "id": "ws-orders-legacy",
+          "name": "orders-legacy",
+          "environment": "prod",
+          "active": false,
+          "vcs_repo_identifier": "platform/data-pipelines",
+          "working_directory": "environments/prod/legacy",
+          "branch": "main",
+          "fixture": true
+        },
+        "run": {
+          "id": "run-legacy-042",
+          "workspace_id": "ws-orders-legacy",
+          "status": "applied",
+          "created_at": "2026-09-08T10:16:00+00:00",
+          "source": "vcs",
+          "actor": "user:arjun.mehta@example.com",
+          "vcs_revision": "$DEMO_HISTORICAL_SHA",
+          "attributes": {
+            "actor_category": "user",
+            "created_by_email": "arjun.mehta@example.com",
+            "message": "Migrate orders transformer state address",
+            "has_changes": true,
+            "is_destroy": false
+          },
+          "fixture": true
+        },
+        "state_version": {
+          "id": "sv-legacy-042",
+          "created_at": "2026-09-08T10:19:00+00:00",
+          "fixture": true
+        },
+        "fixture": true
+      }
+    ]
+  },
+  "git": {
+    "mode": "demo_repo",
+    "workspace_id": "ws-orders-prod",
+    "repository": "platform/data-pipelines",
+    "repository_url": "https://gitlab.example.com/platform/data-pipelines",
+    "working_directory": "environments/prod/orders",
+    "branch": "main",
+    "sha": "$DEMO_HEAD_SHA",
+    "resource_address": "module.orders.aws_lambda_function.transformer",
+    "function_name": "orders-transformer"
+  },
+  "cloudtrail": {
+    "status": "success",
+    "event_history_limited": true,
+    "events": [
+      {
+        "event_id": "ct-current-update-001",
+        "event_time": "2026-10-28T14:05:00+00:00",
+        "event_source": "lambda.amazonaws.com",
+        "event_name": "UpdateFunctionConfiguration20150331v2",
+        "region": "ap-south-1",
+        "account_id": "123456789012",
+        "principal_type": "assumed_role",
+        "principal_arn": "arn:aws:sts::123456789012:assumed-role/PlatformDeploy/prod-ci",
+        "principal_id": "AROAEXAMPLE:prod-ci",
+        "session_issuer_arn": "arn:aws:iam::123456789012:role/PlatformDeploy",
+        "source_identity": "gitlab-ci",
+        "user_agent": "aws-cli/2.17.0",
+        "resource_arns": ["arn:aws:lambda:ap-south-1:123456789012:function:orders-transformer"],
+        "resource_names": ["orders-transformer"],
+        "match_type": "exact_event_resource",
+        "limitations": ["Management event only; this is not an invocation record."],
+        "fixture": true
+      }
+    ]
+  },
+  "cloudwatch": {
+    "status": "success",
+    "activity": {
+      "window_start": "2026-10-19T00:00:00+00:00",
+      "window_end": "2026-11-02T00:00:00+00:00",
+      "period_seconds": 300,
+      "metric_namespace": "AWS/Lambda",
+      "dimensions": {"FunctionName": "orders-transformer"},
+      "latest_nonzero_invocations_at": "2026-11-01T18:30:00+00:00",
+      "latest_nonzero_invocation_sum": 148.0,
+      "total_invocations": 18420.0,
+      "total_errors": 12.0,
+      "total_throttles": 0.0,
+      "average_duration_ms": 187.4,
+      "maximum_duration_ms": 921.0,
+      "invocation_datapoints": 672,
+      "error_datapoints": 4,
+      "throttle_datapoints": 0,
+      "no_datapoints": false,
+      "limitations": [
+        "Lambda service metrics are emitted in aggregate intervals; a metric bucket is not an exact invocation time.",
+        "No datapoint returned for a query does not prove the function is unused."
+      ],
+      "fixture": true
+    }
+  },
+  "omni": {"configured": false, "limitations": ["No Omni link configured in fixture mode."]}
+}

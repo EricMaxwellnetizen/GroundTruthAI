@@ -1,0 +1,106 @@
+{
+  "case_id": "C_candidate_lineage",
+  "version": "1.0.0",
+  "demo": true,
+  "label": "C - Candidate lineage only",
+  "summary": "No current or historical state binding exists, but a similarly named Terraform resource and a synthetic commit suggest a possible owner.",
+  "expected": {
+    "status": "CANDIDATE_LINEAGE",
+    "confidence": "LOW",
+    "recommendation": "REVIEW_CANDIDATE_MATCH_MANUALLY",
+    "blocked_adoption": false
+  },
+  "resource": {
+    "provider": "aws",
+    "service": "lambda",
+    "resource_type": "aws_lambda_function",
+    "account_id": "123456789012",
+    "region": "ap-south-1",
+    "name": "analytics-normalizer",
+    "arn": "arn:aws:lambda:ap-south-1:123456789012:function:analytics-normalizer",
+    "provider_id": "analytics-normalizer",
+    "observed_at": "2026-11-02T06:30:00+00:00",
+    "status": "Active",
+    "last_modified_at": "2026-10-03T11:42:00+00:00",
+    "tags": {
+      "Environment": "prod",
+      "Owner": "data-platform",
+      "CostCenter": "CC-2088"
+    },
+    "safe_attributes": {
+      "runtime": "python3.12",
+      "handler": "handler.normalize",
+      "memory_size": 256,
+      "timeout": 60,
+      "package_type": "Zip",
+      "architectures": ["arm64"],
+      "last_update_status": "Successful",
+      "version": "7",
+      "code_sha256": "b7c2a308ea5a0e34f1c6a5c6d10a0fdfe2d1c3b4a5f60718293a4b5c6d7e8f90",
+      "environment_variable_count": 2
+    },
+    "fixture": true
+  },
+  "aws": {"status": "success"},
+  "scalr": {
+    "status": "success",
+    "queried_filter": "fixture-resource-usage",
+    "resource_usages": []
+  },
+  "git": {
+    "mode": "inline",
+    "repository": "platform/analytics-pipelines",
+    "repository_url": "https://gitlab.example.com/platform/analytics-pipelines",
+    "working_directory": "environments/prod/analytics",
+    "branch": "main",
+    "sha": null,
+    "run_id": null,
+    "workspace_id": null,
+    "commit_verified": false,
+    "candidate_only": true,
+    "commit": null,
+    "file_matches": [
+      {
+        "path": "environments/prod/analytics/lambda.tf",
+        "matched_string": "analytics-normalizer-v2",
+        "match_type": "candidate_name",
+        "snippet": "resource \"aws_lambda_function\" \"normalizer_v2\" {\n  function_name = \"analytics-normalizer-v2\"\n  ...\n}",
+        "line": 12,
+        "commit_sha": null,
+        "fixture": true
+      }
+    ],
+    "history_matches": [],
+    "limitations": [
+      "The file mentions a similarly named function, not this exact ARN.",
+      "No commit SHA is verified for this candidate."
+    ]
+  },
+  "cloudtrail": {
+    "status": "success",
+    "event_history_limited": true,
+    "events": []
+  },
+  "cloudwatch": {
+    "status": "success",
+    "activity": {
+      "window_start": "2026-10-19T00:00:00+00:00",
+      "window_end": "2026-11-02T00:00:00+00:00",
+      "period_seconds": 300,
+      "metric_namespace": "AWS/Lambda",
+      "dimensions": {"FunctionName": "analytics-normalizer"},
+      "total_invocations": 0.0,
+      "total_errors": 0.0,
+      "total_throttles": 0.0,
+      "invocation_datapoints": 0,
+      "error_datapoints": 0,
+      "throttle_datapoints": 0,
+      "no_datapoints": true,
+      "limitations": [
+        "No datapoint returned for a query does not prove the function is unused."
+      ],
+      "fixture": true
+    }
+  },
+  "omni": {"configured": false, "limitations": ["No Omni link configured in fixture mode."]}
+}
