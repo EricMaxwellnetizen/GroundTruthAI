@@ -181,6 +181,31 @@ def render() -> None:
             st.error("Do not adopt or change this resource until the ownership conflict is resolved.")
         ui.evidence_chips(result.recommendation.evidence_ids, result=result)
 
+    from groundtruth.services.adoption import build_adoption_proposal
+
+    proposal = build_adoption_proposal(result)
+    ui.section(
+        "Adoption proposal (preview)",
+        "Deterministic import block generated from the verified identity. Preview only — nothing is applied.",
+    )
+    with st.container(border=True):
+        if not proposal.eligible:
+            st.error(proposal.blocked_reason or "Adoption is blocked for this investigation.")
+        else:
+            st.code(proposal.hcl, language="hcl")
+            with st.expander("Pre-apply checklist", expanded=False):
+                for step in proposal.checklist:
+                    st.markdown(f"- {step}")
+            st.download_button(
+                "Download .tf preview",
+                data=proposal.hcl,
+                file_name=f"{proposal.function_name}.adoption.tf",
+                mime="text/plain",
+                key="adoption_download",
+            )
+        for warning in proposal.warnings:
+            st.caption(f"Note: {warning}")
+
     gaps = result.coverage_gaps()
     if gaps:
         ui.section("Coverage gaps", "A missing record is a visibility gap, not evidence that the event never happened.")

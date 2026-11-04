@@ -10,7 +10,7 @@ The deterministic engine owns the status and confidence. Meta Muse Spark can exp
 
 ![GroundTruth overview](docs/images/home.png)
 
-> **Demo / fixture data.** The default mode is fully synthetic. No AWS account, Scalr workspace, GitLab project, or CloudTrail event is queried until live mode is configured and tested.
+> **Simulated environment (default).** The console opens against the Northgate Production mirror — payloads shaped like live AWS, Scalr, GitLab, CloudTrail and CloudWatch responses (real-format ARNs, workspace/run IDs, commit SHAs, principal ARNs). No live account is queried until live mode is configured and its connection test succeeds.
 
 ## The problem
 
@@ -22,7 +22,7 @@ GroundTruth answers one narrow, high-value question:
 
 ## What ships in this release
 
-- **Fixture mode** that works offline with five known-answer cases.
+- **Simulated environment** with eight known-answer scenarios covering every terminal status, plus a deterministic adoption-proposal preview (import blocks, never applied).
 - **Read-only live connectors** for AWS Lambda, IAM role metadata, CloudTrail, CloudWatch metrics, Scalr, local Git, optional GitLab, and optional CloudWatch Omni context.
 - **Deterministic ownership engine** with exact-identity match tiers and seven terminal statuses.
 - **Muse Spark explanation** with a guarded, bounded read-only tool loop, strict citation validation, and a deterministic fallback.
@@ -66,11 +66,13 @@ cp .env.example .env
 streamlit run app.py
 ```
 
-Open `http://localhost:8501`. On the Home page, click **Run this case** on any known-answer fixture. Case A (`Historical owner found`) is the recommended first demo.
+Open `http://localhost:8501`. On the Overview page, click **Open investigation** on any scenario. Case A (`Historical owner found`) is the recommended starting point.
 
-No credentials are required for fixture mode. The fixture Git repository is generated under `demo-data/data-pipelines`; fixture JSON is in `fixtures/cases/`.
+No credentials are required for the simulated environment. The mirrored Git repository is generated under `demo-data/data-pipelines`; scenario payloads live in `fixtures/cases/`.
 
-## Fixture cases
+## Simulated scenarios (Northgate Production mirror)
+
+Account `739201845610`, Scalr host `northgate.scalr.io`, repositories under `gitlab.com/northgate/*`. All identifiers use production formats; the tenant itself is simulated.
 
 | Case | Scenario | Expected status | Confidence |
 | --- | --- | --- | --- |
@@ -79,6 +81,9 @@ No credentials are required for fixture mode. The fixture Git repository is gene
 | `C_candidate_lineage` | Similar name/path only; no exact identity relationship | `CANDIDATE_LINEAGE` | LOW |
 | `D_insufficient_access` | Required Scalr and CloudTrail reads are denied or unavailable | `INSUFFICIENT_ACCESS` | UNKNOWN |
 | `E_current_owner` | One active exact Scalr resource-usage binding | `CURRENT_OWNER_FOUND` | HIGH |
+| `F_unattributed` | Live and invoked, but no checked source claims the function | `UNATTRIBUTED_IN_CHECKED_SOURCES` | UNKNOWN |
+| `G_identity_ambiguous` | Exact ARN present but recorded under a different AWS account | `IDENTITY_AMBIGUOUS` | UNKNOWN |
+| `H_current_owner_fraud` | Second region/team (`eu-west-1`, risk platform) with one active owner | `CURRENT_OWNER_FOUND` | HIGH |
 
 The engine can also return `UNATTRIBUTED_IN_CHECKED_SOURCES` and `IDENTITY_AMBIGUOUS` for live evidence that does not fit a known-answer fixture.
 

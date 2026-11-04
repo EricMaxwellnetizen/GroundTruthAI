@@ -1,0 +1,105 @@
+{
+  "case_id": "F_unattributed",
+  "version": "2.0.0",
+  "demo": true,
+  "label": "F — Unattributed in checked sources",
+  "summary": "invoice-pdf-renderer is live and actively invoked, but no Scalr record, repository or state backup checked claims it. That is not proof it was created manually.",
+  "expected": {
+    "status": "UNATTRIBUTED_IN_CHECKED_SOURCES",
+    "confidence": "UNKNOWN",
+    "recommendation": "PREPARE_SEPARATE_ADOPTION_PROPOSAL",
+    "blocked_adoption": false
+  },
+  "resource": {
+    "provider": "aws",
+    "service": "lambda",
+    "resource_type": "aws_lambda_function",
+    "account_id": "739201845610",
+    "region": "ap-south-1",
+    "name": "invoice-pdf-renderer",
+    "arn": "arn:aws:lambda:ap-south-1:739201845610:function:invoice-pdf-renderer",
+    "provider_id": "invoice-pdf-renderer",
+    "observed_at": "2026-11-02T06:30:00+00:00",
+    "status": "Active",
+    "last_modified_at": "2026-10-26T09:14:00+00:00",
+    "tags": {
+      "Environment": "prod",
+      "Team": "billing-platform",
+      "CostCenter": "CC-4410",
+      "Service": "billing-api"
+    },
+    "safe_attributes": {
+      "runtime": "nodejs22.x",
+      "handler": "index.handler",
+      "memory_size": 1024,
+      "timeout": 60,
+      "package_type": "Zip",
+      "architectures": ["arm64"],
+      "last_update_status": "Successful",
+      "version": "44",
+      "role": "arn:aws:iam::739201845610:role/invoice-pdf-renderer-exec",
+      "code_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "environment_variable_count": 4
+    },
+    "fixture": true
+  },
+  "aws": {"status": "success"},
+  "scalr": {
+    "status": "success",
+    "queried_filter": "tf-resource-usage:aws_lambda_function",
+    "resource_usages": []
+  },
+  "git": null,
+  "cloudtrail": {
+    "status": "success",
+    "event_history_limited": true,
+    "events": [
+      {
+        "event_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+        "event_time": "2026-10-26T09:14:00+00:00",
+        "event_source": "lambda.amazonaws.com",
+        "event_name": "UpdateFunctionConfiguration20150331v2",
+        "region": "ap-south-1",
+        "account_id": "739201845610",
+        "principal_type": "assumed_role",
+        "principal_arn": "arn:aws:sts::739201845610:assumed-role/NorthgateDeploy/github-actions-117",
+        "principal_id": "AROACK3N7QW2X9M4P8R1T:github-actions-117",
+        "session_issuer_arn": "arn:aws:iam::739201845610:role/NorthgateDeploy",
+        "source_identity": "github-actions",
+        "user_agent": "aws-cli/2.27.12 Python/3.13.4 Linux/6.8.0 exe/x86_64.ubuntu.24",
+        "resource_arns": ["arn:aws:lambda:ap-south-1:739201845610:function:invoice-pdf-renderer"],
+        "resource_names": ["invoice-pdf-renderer"],
+        "match_type": "exact_event_resource",
+        "limitations": ["Management event only; this is not an invocation record."],
+        "fixture": true
+      }
+    ]
+  },
+  "cloudwatch": {
+    "status": "success",
+    "activity": {
+      "window_start": "2026-10-19T00:00:00+00:00",
+      "window_end": "2026-11-02T00:00:00+00:00",
+      "period_seconds": 300,
+      "metric_namespace": "AWS/Lambda",
+      "dimensions": {"FunctionName": "invoice-pdf-renderer"},
+      "latest_nonzero_invocations_at": "2026-11-02T05:55:00+00:00",
+      "latest_nonzero_invocation_sum": 96.0,
+      "total_invocations": 41208.0,
+      "total_errors": 3.0,
+      "total_throttles": 0.0,
+      "average_duration_ms": 412.8,
+      "maximum_duration_ms": 2840.0,
+      "invocation_datapoints": 671,
+      "error_datapoints": 2,
+      "throttle_datapoints": 0,
+      "no_datapoints": false,
+      "limitations": [
+        "Lambda service metrics are emitted in aggregate intervals; a metric bucket is not an exact invocation time.",
+        "No datapoint returned for a query does not prove the function is unused."
+      ],
+      "fixture": true
+    }
+  },
+  "omni": {"configured": false, "limitations": ["CloudWatch Omni is not enabled for this account."]}
+}

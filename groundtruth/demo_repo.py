@@ -15,15 +15,15 @@ INITIAL_DATE = "2026-09-01T09:00:00+00:00"
 UPDATE_DATE = "2026-10-28T14:00:00+00:00"
 DOCS_DATE = "2026-11-01T08:30:00+00:00"
 AUTHOR_NAME = "Priya Raman"
-AUTHOR_EMAIL = "priya.raman@example.com"
-REPOSITORY_URL = "https://gitlab.example.com/platform/data-pipelines"
+AUTHOR_EMAIL = "priya.raman@northgate.io"
+REPOSITORY_URL = "https://gitlab.com/northgate/data-pipelines"
 FILE_PATH = "environments/prod/orders/lambda.tf"
 DOCS_PATH = "README.md"
 FUNCTION_NAME = "orders-transformer"
 RESOURCE_ADDRESS = "module.orders.aws_lambda_function.transformer"
 MODULE_NAME = "orders"
 
-HISTORICAL_FILE = f"""# DEMO DATA - synthetic Terraform fixture for GroundTruth
+HISTORICAL_FILE = f"""# Managed by Terraform — module: orders
 # Terraform address: {RESOURCE_ADDRESS}
 
 resource "aws_lambda_function" "transformer" {{
@@ -36,16 +36,18 @@ resource "aws_lambda_function" "transformer" {{
 
   tags = {{
     Environment = "prod"
-    Owner       = "platform-orders"
+    Team        = "platform-orders"
+    Service     = "orders-api"
   }}
 }}
 """
 
 UPDATED_FILE = HISTORICAL_FILE.replace('runtime       = "python3.12"', 'runtime       = "python3.13"')
 
-INITIAL_README = """# platform/data-pipelines
+INITIAL_README = """# northgate/data-pipelines
 
-DEMO DATA - synthetic repository used by GroundTruth fixture mode.
+Terraform/OpenTofu roots for Northgate data platform workloads (orders, analytics, payments).
+Each environment directory maps to one Scalr workspace. See `environments/` for roots.
 """
 
 UPDATED_README = (

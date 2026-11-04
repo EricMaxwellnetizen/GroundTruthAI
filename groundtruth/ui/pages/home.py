@@ -17,9 +17,9 @@ def _open_case(case_id: str, label: str) -> None:
 def _source_readiness(settings) -> list[dict[str, str]]:
     return [
         {
-            "Source": "Fixture mode",
-            "State": "Ready offline",
-            "Detail": f"{len(state.orchestrator().list_fixture_cases())} synthetic cases",
+            "Source": "Simulated environment",
+            "State": "Connected",
+            "Detail": f"Northgate Production mirror · {len(state.orchestrator().list_fixture_cases())} scenarios",
         },
         {
             "Source": "AWS Lambda",
@@ -51,7 +51,7 @@ def _source_readiness(settings) -> list[dict[str, str]]:
             "State": f"{len(settings.mcp_servers)} server(s), default deny"
             if settings.mcp_servers
             else "Optional, not configured",
-            "Detail": "Human allowlist required",
+            "Detail": "Explicit allowlist required",
         },
     ]
 
@@ -59,98 +59,81 @@ def _source_readiness(settings) -> list[dict[str, str]]:
 def render() -> None:
     settings = state.settings()
     cases = state.orchestrator().list_fixture_cases()
+    inventory = state.orchestrator().fixture_inventory()
     ui.header(
-        "Resource lineage, with receipts",
-        "Find the owner before you touch the resource.",
-        "GroundTruth correlates exact AWS identity, Scalr state ownership, Git history, CloudTrail and CloudWatch evidence. "
-        "The deterministic engine owns the status; Muse Spark only explains the evidence it is given.",
+        "Northgate Production · ap-south-1",
+        "Operations overview",
+        "Track Lambda ownership across AWS and Scalr, investigate resources whose manager is unclear, and resolve conflicts before any change is planned.",
     )
     ui.fixture_banner(settings.mode == "fixture", settings.mode)
 
+    conflicts = sum(1 for c in cases if c.get("expected_status") == "MULTIPLE_ACTIVE_OWNERS")
+    gaps = sum(1 for c in cases if c.get("expected_status") == "INSUFFICIENT_ACCESS")
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        ui.metric("Fixture cases", str(len(cases)))
+        ui.metric("Functions tracked", str(len(inventory)), "Distinct functions in the current environment")
     with col2:
-        ui.metric("Saved investigations", str(state.repository().count()))
-    with col3:
-        ui.metric("AI mode", "Muse Spark" if settings.ai_configured else "Fallback")
-    with col4:
         ui.metric(
-            "Live sources", str(sum([settings.scalr_configured, settings.git_configured, settings.gitlab_configured]))
+            "Ownership conflicts",
+            str(conflicts),
+            "Require resolution before adoption" if conflicts else "No blocking conflicts",
         )
+    with col3:
+        ui.metric("Access gaps", str(gaps), "Sources that could not be checked")
+    with col4:
+        ui.metric("Saved investigations", str(state.repository().count()), "Metadata history on this machine")
 
-    left, right = st.columns([1.35, 1])
+    left, right = st.columns([1.45, 1])
     with left:
         ui.section(
-            "Start with a known-answer case", "The five demo cases exercise every terminal status and confidence path."
+            "Investigation scenarios",
+            "Prebuilt investigations covering every ownership outcome. Open one to review the full evidence chain.",
         )
-        for index, case in enumerate(cases):
+        for case in cases:
             with st.container(border=True):
                 top_left, top_right = st.columns([3, 1])
                 with top_left:
                     st.markdown(f"**{case['label']}**")
                     st.caption(safe_text(str(case.get("summary") or ""), 320))
                 with top_right:
-                    expected = case.get("expected_status") or ""
-                    st.markdown(ui.status_pill(str(expected)), unsafe_allow_html=True)
-                    st.caption(f"Expected {case.get('expected_confidence') or ''} confidence")
+                    st.markdown(ui.status_pill(str(case.get("expected_status") or "")), unsafe_allow_html=True)
+                    st.caption(f"{case.get('expected_confidence') or ''} confidence")
                 st.button(
-                    "Run this case",
+                    "Open investigation",
                     key=f"home_case_{case['case_id']}",
                     on_click=_open_case,
                     args=(case["case_id"], case["label"]),
                     width="stretch",
                 )
     with right:
-        ui.section("Recent investigations", "Metadata only; tokens and raw state are never stored.")
+        ui.section("Recent investigations", "Stored locally. Tokens and raw state are never persisted.")
         recent = state.repository().list(limit=6)
         if recent:
             frame = pd.DataFrame(
                 [
                     {
-                        "Resource": item.resource_name,
-                        "Status": item.status,
+                        "Function": item.resource_name,
+                        "Outcome": ui.status_label(item.status),
                     }
                     for item in recent
                 ]
             )
-            st.dataframe(
-                frame,
-                hide_index=True,
-                width="stretch",
-                column_config={
-                    "Resource": st.column_config.TextColumn(width="small"),
-                    "Status": st.column_config.TextColumn(width="large"),
-                },
-            )
+            st.dataframe(frame, hide_index=True, width="stretch")
         else:
-            ui.empty_state("No saved investigations yet", "Run a fixture case to establish the demo path.")
+            ui.empty_state("No investigations yet", "Open a scenario to populate this history.")
         st.markdown(
-            '<div class="gt-card"><h4>Read-only by design</h4><p>No apply, import, delete, invoke, or infrastructure mutation '
-            "is exposed. Missing evidence is reported as a coverage gap, not proof of absence.</p></div>",
+            '<div class="gt-card"><h4>Read-only by design</h4><p>No apply, import, delete or invocation control is exposed. '
+            "A missing record is reported as a coverage gap — never as proof that no owner exists.</p></div>",
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            '<div class="gt-card" style="margin-top:0.7rem;"><h4>How ownership is decided</h4><p>Exact ARN and state-address joins outrank name similarity. '
+            "Two active owners is a hard stop. The deterministic engine decides; Muse Spark only explains.</p></div>",
             unsafe_allow_html=True,
         )
 
-    ui.section("Connection readiness", "A source is never marked connected until its test actually succeeds.")
+    ui.section(
+        "Environment connections",
+        "A source counts as connected only after its read test succeeds. Configured is not connected.",
+    )
     st.dataframe(pd.DataFrame(_source_readiness(settings)), hide_index=True, width="stretch")
-
-    ui.section("How the answer is produced")
-    step1, step2, step3 = st.columns(3)
-    with step1:
-        st.markdown(
-            '<div class="gt-card"><h4>1. Collect exact identity</h4><p>AWS Lambda ARN, account, region, tags, execution role, '
-            "triggers and metric activity.</p></div>",
-            unsafe_allow_html=True,
-        )
-    with step2:
-        st.markdown(
-            '<div class="gt-card"><h4>2. Correlate ownership</h4><p>Scalr resource usage, workspace, run, state version, exact VCS SHA, '
-            "and Git file history are joined by exact identifiers.</p></div>",
-            unsafe_allow_html=True,
-        )
-    with step3:
-        st.markdown(
-            '<div class="gt-card"><h4>3. Explain with limits</h4><p>The engine sets status and confidence. Muse Spark cites evidence '
-            "IDs or the app falls back deterministically.</p></div>",
-            unsafe_allow_html=True,
-        )

@@ -69,7 +69,7 @@ def render() -> None:
                 x="Kind",
                 y="Count",
                 color="Kind",
-                color_discrete_sequence=["#0F766E", "#B45309", "#6B4EFF", "#0891B2", "#B42318"],
+                color_discrete_sequence=["#0F766E", "#1D4ED8", "#7C3AED", "#0891B2", "#B54708"],
             )
             figure.update_layout(
                 showlegend=False,

@@ -154,7 +154,7 @@ def render() -> None:
     )
     columns = st.columns(4)
     tests = [
-        ("Fixture", "Fixture", lambda: FixtureCaseLoader(settings).test_connection()),
+        ("Fixture", "Simulated environment", lambda: FixtureCaseLoader(settings).test_connection()),
         ("AWS", "AWS Lambda", lambda: AwsLambdaConnector(settings).test_connection()),
         ("Scalr", "Scalr", lambda: ScalrConnector(settings).test_connection()),
         ("Git", "Local Git", lambda: GitLocalConnector(settings).test_connection()),

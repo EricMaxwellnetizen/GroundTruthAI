@@ -32,8 +32,8 @@ def render() -> None:
     col1, col2, col3 = st.columns(3)
     with col1:
         label = "Muse Spark" if explanation.generated_by == "muse-spark" else "Deterministic fallback"
-        foreground = "#155E56" if explanation.generated_by == "muse-spark" else "#9A5B13"
-        background = "#E9F6F1" if explanation.generated_by == "muse-spark" else "#FCEFD8"
+        foreground = "#067647" if explanation.generated_by == "muse-spark" else "#B54708"
+        background = "#ECFDF3" if explanation.generated_by == "muse-spark" else "#FFFAEB"
         st.markdown(ui.pill(label, foreground, background), unsafe_allow_html=True)
     with col2:
         st.metric("Model", explanation.model or "local template")

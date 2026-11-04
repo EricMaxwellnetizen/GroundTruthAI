@@ -18,8 +18,8 @@ def render() -> None:
     settings = state.settings()
     ui.header(
         "Inventory",
-        "Lambdas discovered in the checked sources.",
-        "Fixture mode shows synthetic Lambda functions from the case pack. Live inventory uses Lambda ListFunctions with read-only credentials.",
+        "Lambda functions in this environment.",
+        "Functions discovered via Lambda ListFunctions. Select a function to open its ownership investigation.",
     )
     ui.fixture_banner(settings.mode == "fixture", settings.mode)
     resources = state.orchestrator().fixture_inventory()
@@ -99,16 +99,44 @@ def render() -> None:
                     args=(case_id, label),
                 )
 
-    ui.section("Fixture cases", "Each case is a versioned synthetic scenario with an expected terminal status.")
+    ui.section(
+        "Fleet risk summary",
+        "Ownership posture across every tracked scenario. Conflicts and gaps need an owner before any adoption work.",
+    )
+    risk_rows = []
+    for case in cases:
+        status_value = str(case.get("expected_status") or "")
+        if status_value in {
+            "MULTIPLE_ACTIVE_OWNERS",
+            "IDENTITY_AMBIGUOUS",
+            "INSUFFICIENT_ACCESS",
+            "UNATTRIBUTED_IN_CHECKED_SOURCES",
+        }:
+            risk_rows.append(
+                {
+                    "Scenario": case["label"],
+                    "Outcome": ui.status_label(status_value),
+                    "Confidence": case.get("expected_confidence") or "",
+                    "Action": "Resolve before change"
+                    if status_value in {"MULTIPLE_ACTIVE_OWNERS", "IDENTITY_AMBIGUOUS"}
+                    else "Assign owner / grant read access",
+                }
+            )
+    if risk_rows:
+        st.dataframe(pd.DataFrame(risk_rows), hide_index=True, width="stretch")
+    else:
+        st.caption("No conflicts or access gaps in the current environment.")
+
+    ui.section("Scenario coverage", "Each scenario exercises a distinct ownership outcome and confidence path.")
     st.dataframe(
         pd.DataFrame(
             [
                 {
                     "Case": case["case_id"],
                     "Scenario": case["label"],
-                    "Expected status": case.get("expected_status"),
-                    "Expected confidence": case.get("expected_confidence"),
-                    "Mode": "Fixture",
+                    "Expected outcome": ui.status_label(str(case.get("expected_status") or "")),
+                    "Confidence": case.get("expected_confidence"),
+                    "Environment": "Simulated",
                 }
                 for case in cases
             ]

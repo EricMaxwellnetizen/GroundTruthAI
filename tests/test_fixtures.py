@@ -13,6 +13,9 @@ EXPECTED = {
     "B_multiple_active_owners": (LineageStatus.MULTIPLE_ACTIVE_OWNERS, ConfidenceLabel.HIGH),
     "C_candidate_lineage": (LineageStatus.CANDIDATE_LINEAGE, ConfidenceLabel.LOW),
     "D_insufficient_access": (LineageStatus.INSUFFICIENT_ACCESS, ConfidenceLabel.UNKNOWN),
+    "F_unattributed": (LineageStatus.UNATTRIBUTED_IN_CHECKED_SOURCES, ConfidenceLabel.UNKNOWN),
+    "G_identity_ambiguous": (LineageStatus.IDENTITY_AMBIGUOUS, ConfidenceLabel.UNKNOWN),
+    "H_current_owner_fraud": (LineageStatus.CURRENT_OWNER_FOUND, ConfidenceLabel.HIGH),
 }
 
 
@@ -76,7 +79,7 @@ def test_fixture_case_specific_shapes(settings) -> None:
     assert len([gap for gap in insufficient.coverage if gap.required]) >= 2
 
     cases = loader.list_cases()
-    assert len(cases) == 5
+    assert len(cases) == 8
     assert {case["case_id"] for case in cases} == set(EXPECTED)
 
 

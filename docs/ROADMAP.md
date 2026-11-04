@@ -26,6 +26,7 @@ The hackathon release deliberately ships the narrow, defensible lineage wedge. T
 
 ## Phase 2 - Brownfield IaC adoption assurance
 
+- **Shipped (1.1.0, preview tier):** deterministic adoption proposal — `aws_lambda_function` block + configuration-driven `import` block + pre-apply checklist generated from the verified identity, hard-blocked on duplicate ownership / ambiguous identity / insufficient access, downloadable as a `.tf` preview. No plan execution or apply exists yet; the sandbox-plan tier below remains open.
 - Reconcile live cloud inventory, current/historical Terraform/OpenTofu state, and repository HCL declarations.
 - Map resources into an existing repository/module structure rather than generating a standalone project.
 - Prevent one live resource from being bound to multiple IaC addresses or claimed by multiple active workspaces without explicit resolution.

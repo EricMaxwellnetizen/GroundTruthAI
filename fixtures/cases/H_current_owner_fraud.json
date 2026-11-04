@@ -1,0 +1,154 @@
+{
+  "case_id": "H_current_owner_fraud",
+  "version": "2.0.0",
+  "demo": true,
+  "label": "H — Current owner found (risk platform)",
+  "summary": "fraud-scorer in eu-west-1 has one exact active binding in prod-risk-scoring. A second region, a second team, the same evidence standard.",
+  "expected": {
+    "status": "CURRENT_OWNER_FOUND",
+    "confidence": "HIGH",
+    "recommendation": "INSPECT_CURRENT_WORKSPACE",
+    "blocked_adoption": false
+  },
+  "resource": {
+    "provider": "aws",
+    "service": "lambda",
+    "resource_type": "aws_lambda_function",
+    "account_id": "739201845610",
+    "region": "eu-west-1",
+    "name": "fraud-scorer",
+    "arn": "arn:aws:lambda:eu-west-1:739201845610:function:fraud-scorer",
+    "provider_id": "fraud-scorer",
+    "observed_at": "2026-11-02T06:30:00+00:00",
+    "status": "Active",
+    "last_modified_at": "2026-10-30T11:22:00+00:00",
+    "tags": {
+      "Environment": "prod",
+      "Team": "risk-platform",
+      "CostCenter": "CC-6105",
+      "Service": "fraud-api"
+    },
+    "safe_attributes": {
+      "runtime": "python3.13",
+      "handler": "scorer.handler",
+      "memory_size": 1024,
+      "timeout": 20,
+      "package_type": "Zip",
+      "architectures": ["arm64"],
+      "last_update_status": "Successful",
+      "version": "58",
+      "role": "arn:aws:iam::739201845610:role/fraud-scorer-exec",
+      "code_sha256": "d4735e3a265e16eee03f59718b9b5d03019c07e3b130c6418be22ae7a86ef356",
+      "environment_variable_count": 6
+    },
+    "fixture": true
+  },
+  "aws": {"status": "success"},
+  "scalr": {
+    "status": "success",
+    "queried_filter": "tf-resource-usage:aws_lambda_function",
+    "resource_usages": [
+      {
+        "id": "rusg-62c8e41fa03",
+        "external_id": "arn:aws:lambda:eu-west-1:739201845610:function:fraud-scorer",
+        "address": "module.risk.aws_lambda_function.scorer",
+        "name": "scorer",
+        "is_active": true,
+        "is_duplicate": false,
+        "updated_at": "2026-10-30T11:20:00+00:00",
+        "updated_by_email": "mateo.rossi@northgate.io",
+        "account_id": "739201845610",
+        "region": "eu-west-1",
+        "environment": "prod",
+        "workspace": {
+          "id": "ws-t2v6b8n4m1",
+          "name": "prod-risk-scoring",
+          "environment": "prod",
+          "active": true,
+          "vcs_repo_identifier": "northgate/risk-services",
+          "working_directory": "environments/prod/risk",
+          "branch": "main",
+          "source_url": "https://northgate.scalr.io/environments/env-prod-01/workspaces/ws-t2v6b8n4m1",
+          "fixture": true
+        },
+        "run": {
+          "id": "run-a93d5f08b71",
+          "workspace_id": "ws-t2v6b8n4m1",
+          "status": "applied",
+          "created_at": "2026-10-30T11:17:00+00:00",
+          "source": "vcs",
+          "actor": "user:mateo.rossi@northgate.io",
+          "vcs_revision": null,
+          "source_url": "https://northgate.scalr.io/runs/run-a93d5f08b71",
+          "attributes": {
+            "actor_category": "user",
+            "created_by_email": "mateo.rossi@northgate.io",
+            "message": "Tune fraud-scorer memory and concurrency",
+            "has_changes": true,
+            "is_destroy": false
+          },
+          "fixture": true
+        },
+        "state_version": {
+          "id": "sv-08d3f6c291",
+          "created_at": "2026-10-30T11:19:00+00:00",
+          "fixture": true
+        },
+        "fixture": true
+      }
+    ]
+  },
+  "git": null,
+  "cloudtrail": {
+    "status": "success",
+    "event_history_limited": true,
+    "events": [
+      {
+        "event_id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "event_time": "2026-10-30T11:22:00+00:00",
+        "event_source": "lambda.amazonaws.com",
+        "event_name": "UpdateFunctionConfiguration20150331v2",
+        "region": "eu-west-1",
+        "account_id": "739201845610",
+        "principal_type": "assumed_role",
+        "principal_arn": "arn:aws:sts::739201845610:assumed-role/NorthgateDeploy/gitlab-ci-9034",
+        "principal_id": "AROACK3N7QW2X9M4P8R1T:gitlab-ci-9034",
+        "session_issuer_arn": "arn:aws:iam::739201845610:role/NorthgateDeploy",
+        "source_identity": "gitlab-ci",
+        "user_agent": "aws-cli/2.27.12 Python/3.13.4 Linux/6.8.0 exe/x86_64.ubuntu.24",
+        "resource_arns": ["arn:aws:lambda:eu-west-1:739201845610:function:fraud-scorer"],
+        "resource_names": ["fraud-scorer"],
+        "match_type": "exact_event_resource",
+        "limitations": ["Management event only; this is not an invocation record."],
+        "fixture": true
+      }
+    ]
+  },
+  "cloudwatch": {
+    "status": "success",
+    "activity": {
+      "window_start": "2026-10-19T00:00:00+00:00",
+      "window_end": "2026-11-02T00:00:00+00:00",
+      "period_seconds": 300,
+      "metric_namespace": "AWS/Lambda",
+      "dimensions": {"FunctionName": "fraud-scorer"},
+      "latest_nonzero_invocations_at": "2026-11-02T06:05:00+00:00",
+      "latest_nonzero_invocation_sum": 1840.0,
+      "total_invocations": 2841200.0,
+      "total_errors": 212.0,
+      "total_throttles": 14.0,
+      "average_duration_ms": 148.6,
+      "maximum_duration_ms": 1905.0,
+      "invocation_datapoints": 672,
+      "error_datapoints": 38,
+      "throttle_datapoints": 3,
+      "no_datapoints": false,
+      "limitations": [
+        "Lambda service metrics are emitted in aggregate intervals; a metric bucket is not an exact invocation time.",
+        "No datapoint returned for a query does not prove the function is unused."
+      ],
+      "fixture": true
+    }
+  },
+  "omni": {"configured": false, "limitations": ["CloudWatch Omni is not enabled for this account."]}
+}

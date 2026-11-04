@@ -73,11 +73,14 @@ def _state_backup_panel() -> StateBackupEvidence | None:
 def _fixture_form() -> None:
     cases = state.orchestrator().list_fixture_cases()
     if not cases:
-        ui.empty_state("No fixture cases found", "Check the fixtures/cases directory and GROUNDTRUTH_FIXTURES_DIR.")
+        ui.empty_state("No scenarios available", "Check the scenarios directory and GROUNDTRUTH_FIXTURES_DIR.")
         return
-    labels = {case["case_id"]: f"{case['label']} — {case.get('expected_status', '')}" for case in cases}
+    labels = {
+        case["case_id"]: f"{case['label']} — {ui.status_label(str(case.get('expected_status') or ''))}"
+        for case in cases
+    }
     case_id = st.selectbox(
-        "Fixture case",
+        "Scenario",
         options=[case["case_id"] for case in cases],
         format_func=lambda value: labels.get(value, value),
         key="fixture_case_select",
@@ -90,7 +93,7 @@ def _fixture_form() -> None:
     with meta_right:
         st.caption(f"Expected confidence: {selected.get('expected_confidence') or 'unknown'}")
     st.button(
-        "Run fixture investigation",
+        "Run investigation",
         type="primary",
         width="stretch",
         disabled=task_running(),
@@ -104,7 +107,7 @@ def _live_form() -> None:
     st.markdown("**Resource identity**")
     identifier = st.text_input(
         "Lambda ARN or function name",
-        placeholder="arn:aws:lambda:ap-south-1:123456789012:function:orders-transformer",
+        placeholder="arn:aws:lambda:ap-south-1:739201845610:function:orders-transformer",
         key="live_identifier",
     )
     col1, col2 = st.columns(2)
@@ -113,7 +116,7 @@ def _live_form() -> None:
     with col2:
         account_id = st.text_input(
             "Account ID (optional when using a full ARN)",
-            placeholder="123456789012",
+            placeholder="739201845610",
             key="live_account",
         )
     with st.expander("Time window and sources", expanded=True):
@@ -184,17 +187,17 @@ def render() -> None:
     ui.header(
         "Investigate",
         "Trace one Lambda from cloud identity to managing workspace.",
-        "Fixture mode works offline and is the verified demo path. Live mode uses read-only connectors and labels every gap.",
+        "Enter a function ARN or pick a tracked function. GroundTruth correlates AWS, Scalr, Git, CloudTrail and CloudWatch evidence into a single auditable result.",
     )
     ui.fixture_banner(settings.mode == "fixture", settings.mode)
     mode = st.radio(
-        "Investigation source",
-        options=["Fixture", "Live"],
+        "Environment",
+        options=["Simulated", "Live"],
         horizontal=True,
         index=0 if settings.mode == "fixture" else 1,
         key="investigate_mode",
     )
-    if mode == "Fixture":
+    if mode == "Simulated":
         _fixture_form()
     else:
         _live_form()
