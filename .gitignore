@@ -46,11 +46,12 @@ demo-data/*
 GroundTruth_Demo/
 
 # Generated video media (regenerable from video/*.py; kept locally only)
-video/assets/
-video/clips/
-video/out/
-video/*.py
+video/
 
 # Local environment overrides
 .env.local
 .env.*.local
+
+# Demo / submission presentation material (not part of the core project)
+docs/VIDEO_MASTER_PROMPT.md
+docs/DEMO_SCRIPT.md
