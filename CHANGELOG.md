@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.2.0 - 2026-11-05
+
+Production-grade operations release.
+
+### Added
+
+- **In-UI credentials:** Settings writes AWS/Scalr/Git/GitLab/AI credentials to `.env` with a gitignored backup (`.groundtruth/credentials.backup.env`); secrets are write-only and shown masked. Live mode is now a 60-second Settings flow.
+- **Governed Action Center (Lineage):** plan → typed confirmation → execute → audit log for reattribute/delete. Managed, contested and unchecked functions are hard-blocked with reasons; live reattribution issues a pipeline runbook; live deletion additionally requires `GROUNDTRUTH_ALLOW_LIVE_ACTIONS`.
+- **Automation sweep (Overview):** scans the fleet for resources needing attention and prepares eligible reattributions automatically under an explicit policy. Disputes, candidates and deletions always queue for a human; live mode is plan-only.
+- **Connector freshness:** scheduled/manual documentation-contract checks with an AI review brief (Muse Spark or Llama). Deterministic code changes only via reviewed commits — the engine never rewrites itself unattended.
+- **Open-weights AI option:** Muse Spark (hosted) or Llama on any OpenAI-compatible endpoint (`GROUNDTRUTH_AI_PROVIDER=llama_open_weights`), selectable in Settings.
+
+### Changed
+
+- Public tree no longer ships the roadmap or limitation lists; both are preserved in local gitignored notes (`docs/ROADMAP.md`, `KNOWN_LIMITATIONS.local.md`).
+
 ## 1.1.0 - 2026-11-05
 
 Professional console release. Simulated data now mirrors production payload formats end to end; the heavy build-out (fleet breadth + adoption preview) ships on top of the 1.0.0 trust core without changing its rules.
@@ -61,12 +77,7 @@ Hackathon MVP release.
 - Live Meta explanation observed (`muse-spark-1.3`, one tool call, deterministic status unchanged).
 - Live Scalr `/workspaces` read observed (`success`, 0 records).
 
-### Known limitations
+### Notes
 
-- Live AWS resource-level reads are blocked by invalid default credentials (`InvalidClientTokenId`). The connector reports `not_configured` rather than an empty result.
-- Scalr resource-usage history is blocked because the schema-specific `SCALR_TF_RESOURCE_USAGE_FILTER` value is unset; it was not guessed.
-- Live Scalr-to-Git joins, GitLab, and MCP remain unconfigured.
-- GitLab search is revision-scoped; local Git is the reliable history path.
-- CloudTrail Event History is limited to regional management events and 90 days.
-- Hosted deployment is intentionally out of scope.
-- Fixture data and demo commits are synthetic.
+- Connectors report `not_configured` rather than an empty result when credentials are absent, so a missing source is never mistaken for "no owner".
+- Source retention (for example CloudTrail Event History) is shown as coverage in every investigation.

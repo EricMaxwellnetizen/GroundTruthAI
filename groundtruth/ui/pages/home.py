@@ -56,6 +56,53 @@ def _source_readiness(settings) -> list[dict[str, str]]:
     ]
 
 
+def _automation_panel(settings, cases) -> None:
+    from pathlib import Path
+
+    from groundtruth.services.actions import ActionExecutor
+    from groundtruth.services.automation import AutomationPolicy, run_automation, scan_attention
+
+    orchestrator = state.orchestrator()
+    results = []
+    for case in cases:
+        try:
+            results.append(orchestrator.run_fixture(case["case_id"]))
+        except Exception:
+            continue
+    attention = scan_attention(results)
+    ui.section(
+        "Needs attention",
+        f"{len(attention)} function(s) need an ownership decision. Automation prepares reattributions for historical owners; disputes and deletions always wait for a human.",
+    )
+    if attention:
+        st.dataframe(
+            pd.DataFrame(
+                [
+                    {
+                        "Function": item.function_name,
+                        "Outcome": ui.status_label(item.status),
+                        "Suggested": item.suggested_action,
+                        "Auto-eligible": item.auto_eligible,
+                    }
+                    for item in attention
+                ]
+            ),
+            hide_index=True,
+            width="stretch",
+        )
+    policy = AutomationPolicy(enabled=settings.automation_enabled)
+    st.caption(
+        f"Automation policy: {'enabled' if policy.enabled else 'disabled'} (Settings → Automation & freshness). Live mode is plan-only."
+    )
+    if st.button("Run automation sweep", key="home_automation_run", disabled=not attention):
+        executor = ActionExecutor(
+            Path(settings.project_root) / ".groundtruth" / "action_audit.jsonl", allow_live=settings.allow_live_actions
+        )
+        outcomes = run_automation(results, policy, executor)
+        for outcome in outcomes:
+            st.markdown(f"- **{outcome['function']}** — {outcome['outcome']}: {outcome['detail']}")
+
+
 def render() -> None:
     settings = state.settings()
     cases = state.orchestrator().list_fixture_cases()
@@ -122,7 +169,7 @@ def render() -> None:
         else:
             ui.empty_state("No investigations yet", "Open a scenario to populate this history.")
         st.markdown(
-            '<div class="gt-card"><h4>Read-only by design</h4><p>No apply, import, delete or invocation control is exposed. '
+            '<div class="gt-card"><h4>Investigations never mutate</h4><p>Reads are read-only. Changes happen only in the governed Action Center — planned, confirmed, audit-logged. '
             "A missing record is reported as a coverage gap — never as proof that no owner exists.</p></div>",
             unsafe_allow_html=True,
         )
@@ -131,6 +178,8 @@ def render() -> None:
             "Two active owners is a hard stop. The deterministic engine decides; Muse Spark only explains.</p></div>",
             unsafe_allow_html=True,
         )
+
+    _automation_panel(settings, cases)
 
     ui.section(
         "Environment connections",

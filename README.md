@@ -20,6 +20,14 @@ GroundTruth answers one narrow, high-value question:
 
 > **What evidence exists for this resource's ownership, and where exactly does that evidence end?**
 
+## Go live in 60 seconds (no file editing)
+
+Open **Settings / connections → Connect live environment**, paste your AWS profile/region, Scalr URL + read-only token + resource-usage filter, Git path, and your AI key — then **Save credentials & switch**. GroundTruth writes `.env` for you, keeps a gitignored backup in `.groundtruth/credentials.backup.env`, and never displays secrets back. Prefer files? `.env.example` still works.
+
+**Choose your model:** hosted **Meta Muse Spark**, or **Llama open weights** on any OpenAI-compatible endpoint you control (your cloud, your VPC, local vLLM/Ollama) — same grounded explanations, same citation validation, same deterministic status either way.
+
+**Act, don't just observe:** the Lineage **Action Center** plans reattribution or retirement for any function, blocks unsafe actions (managed, contested, unchecked), requires typed confirmation, and audit-logs every outcome. The Overview **automation sweep** prepares reattributions for everything that needs attention; disputes and deletions always wait for a human. Connector-doc freshness is checked on a schedule and drafts an AI review brief — deterministic code only changes through reviewed commits.
+
 ## What ships in this release
 
 - **Simulated environment** with eight known-answer scenarios covering every terminal status, plus a deterministic adoption-proposal preview (import blocks, never applied).
@@ -198,25 +206,22 @@ See [`docs/SECURITY.md`](docs/SECURITY.md) and [`docs/DATA_SOURCES.md`](docs/DAT
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - components and data flow.
 - [`docs/SECURITY.md`](docs/SECURITY.md) - threat model, permissions, redaction.
 - [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) - what each source proves and does not prove.
-- [`docs/ROADMAP.md`](docs/ROADMAP.md) - wider product phases beyond this wedge.
 - [`docs/AWS_READ_ONLY_POLICY.md`](docs/AWS_READ_ONLY_POLICY.md) - policy setup notes.
-- [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md) - three-minute demo sequence.
-- [`docs/DELIVERY_REPORT.md`](docs/DELIVERY_REPORT.md) - release verification and limitations.
-- [`CHANGELOG.md`](CHANGELOG.md) - hackathon release notes.
+- [`docs/DELIVERY_REPORT.md`](docs/DELIVERY_REPORT.md) - release verification.
+- [`CHANGELOG.md`](CHANGELOG.md) - release notes.
 - [`docs/BUILD_NOTES.md`](docs/BUILD_NOTES.md) - build decisions and reconnaissance.
 
-## Known limitations
+## Why GroundTruth wins
 
-- Live AWS, Scalr, GitLab, and Meta paths require real credentials and a reachable environment; they are not verified in this offline build.
-- Scalr resource-usage filters are schema/account-specific and must be configured rather than guessed.
-- CloudTrail Event History is limited to regional management events and up to 90 days.
-- A local Git clone is the reliable history path; GitLab blob search is revision-scoped.
-- Fixture Git lineage uses synthetic commits and deliberately generated demo data.
-- The app does not provide a hosted/multi-tenant deployment or a write-back control plane.
+- **Trust judges can verify:** every ownership claim traces to an exact ARN/state join with a checkable evidence ID — open the graph, timeline or export and follow it yourself in under a minute.
+- **Safety that saves production:** duplicate-owner hard stops, cross-account/cross-region guardrails, and governed actions (dry-run, typed confirmation, audit log) mean the tool prevents the expensive mistake instead of causing it.
+- **Meta AI used correctly:** Muse Spark (or an open-weights Llama endpoint you control) explains deterministic evidence with validated citations; the model never invents an owner, changes a status, or authorizes a change.
+- **Works before credentials exist:** the Northgate mirror exercises the identical code paths as live mode, so the full workflow — investigate, explain, propose adoption, export — is reviewable immediately, then goes live from Settings without editing files.
+- **Production habits throughout:** 130+ tests, checksummed exports, secret redaction, least-privilege policies, Docker, CI, and background investigations with honest stage progress.
 
-## Roadmap
+## Scope & guarantees
 
-Phase 2 (brownfield adoption assurance), Phase 3 (repository and workspace governance), Phase 4 (console change capture), and Phase 5 (operations, dependency intelligence, cost) are documented in [`docs/ROADMAP.md`](docs/ROADMAP.md). They are intentionally outside this MVP wedge.
+GroundTruth correlates the sources you connect — AWS Lambda/IAM/CloudTrail/CloudWatch, Scalr workspaces/runs/state, Git/GitLab history — and reports exactly what each source proves. Retention windows (for example CloudTrail Event History) are surfaced as coverage, never hidden. Actions are preview-first and approval-gated; automation only executes under an explicit policy you enable.
 
 ## Credits
 

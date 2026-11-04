@@ -73,7 +73,7 @@ class Settings:
     project_root: Path = PROJECT_ROOT
     app_name: str = "GroundTruth"
     tagline: str = "Find the owner before you touch the resource."
-    version: str = "1.1.0"
+    version: str = "1.2.0"
     mode: str = "fixture"
     log_level: str = "INFO"
     database_url: str = "sqlite:///./groundtruth.db"
@@ -99,6 +99,14 @@ class Settings:
     model_api_key: str = ""
     meta_api_base_url: str = "https://api.meta.ai/v1"
     meta_model: str = "muse-spark-1.3"
+    ai_provider: str = "muse_spark"
+    llama_api_base_url: str = ""
+    llama_model: str = "meta-llama/Llama-4-Maverick-17B-128E-Instruct"
+    llama_api_key: str = ""
+    automation_enabled: bool = False
+    allow_live_actions: bool = False
+    freshness_auto: bool = False
+    freshness_interval_days: int = 30
     ai_enabled: bool = False
     ai_tool_loop_enabled: bool = True
     ai_max_tool_turns: int = 4
@@ -150,6 +158,14 @@ class Settings:
             model_api_key=_text("MODEL_API_KEY"),
             meta_api_base_url=_text("META_API_BASE_URL", "https://api.meta.ai/v1").rstrip("/"),
             meta_model=_text("META_MODEL", "muse-spark-1.3"),
+            ai_provider=_text("GROUNDTRUTH_AI_PROVIDER", "muse_spark").lower(),
+            llama_api_base_url=_text("LLAMA_API_BASE_URL").rstrip("/"),
+            llama_model=_text("LLAMA_MODEL", "meta-llama/Llama-4-Maverick-17B-128E-Instruct"),
+            llama_api_key=_text("LLAMA_API_KEY"),
+            automation_enabled=_bool("GROUNDTRUTH_AUTOMATION_ENABLED", False),
+            allow_live_actions=_bool("GROUNDTRUTH_ALLOW_LIVE_ACTIONS", False),
+            freshness_auto=_bool("GROUNDTRUTH_FRESHNESS_AUTO", False),
+            freshness_interval_days=max(1, _int("GROUNDTRUTH_FRESHNESS_INTERVAL_DAYS", 30)),
             ai_enabled=_bool("AI_ENABLED", False),
             ai_tool_loop_enabled=_bool("GROUNDTRUTH_AI_TOOL_LOOP_ENABLED", True),
             ai_max_tool_turns=max(1, min(_int("GROUNDTRUTH_AI_MAX_TOOL_TURNS", 4), 4)),
@@ -176,7 +192,25 @@ class Settings:
 
     @property
     def ai_configured(self) -> bool:
-        return bool(self.ai_enabled and self.model_api_key)
+        if not self.ai_enabled:
+            return False
+        if self.ai_provider == "llama_open_weights":
+            return bool(self.llama_api_base_url and self.llama_model)
+        return bool(self.model_api_key)
+
+    @property
+    def active_model(self) -> str:
+        return self.llama_model if self.ai_provider == "llama_open_weights" else self.meta_model
+
+    @property
+    def active_base_url(self) -> str:
+        return self.llama_api_base_url if self.ai_provider == "llama_open_weights" else self.meta_api_base_url
+
+    @property
+    def active_api_key(self) -> str:
+        if self.ai_provider == "llama_open_weights":
+            return self.llama_api_key or "not-required"
+        return self.model_api_key
 
     @property
     def git_configured(self) -> bool:

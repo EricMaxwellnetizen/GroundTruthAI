@@ -43,16 +43,21 @@ class AIExplainService:
 
     @property
     def configured(self) -> bool:
-        return bool(self.settings.ai_enabled and self.settings.model_api_key)
+        return self.settings.ai_configured
 
     def explain(self, result: LineageResult) -> AIExplanation:
         self.last_error = None
         self.last_tool_calls = []
         if not self.configured:
+            provider = (
+                "Llama open-weights endpoint"
+                if self.settings.ai_provider == "llama_open_weights"
+                else "Meta Muse Spark"
+            )
             return build_fallback_explanation(
                 result,
-                reason="Meta Muse Spark is not configured; set AI_ENABLED=true and MODEL_API_KEY to enable it.",
-                model=self.settings.meta_model,
+                reason=f"{provider} is not configured; enable AI and add credentials in Settings to use it.",
+                model=self.settings.active_model,
             )
         try:
             return self._explain_remote(result)
@@ -61,14 +66,14 @@ class AIExplainService:
             return build_fallback_explanation(
                 result,
                 reason=f"Muse Spark explanation unavailable: {self.last_error}",
-                model=self.settings.meta_model,
+                model=self.settings.active_model,
             )
         except Exception as exc:
             self.last_error = f"{exc.__class__.__name__}: {safe_text(str(exc), limit=400)}"
             return build_fallback_explanation(
                 result,
                 reason=f"Muse Spark explanation unavailable: {self.last_error}",
-                model=self.settings.meta_model,
+                model=self.settings.active_model,
             )
 
     def _client(self):
@@ -78,8 +83,8 @@ class AIExplainService:
             raise AIUnavailable("The OpenAI-compatible client package is not installed.") from exc
 
         return OpenAI(
-            api_key=self.settings.model_api_key,
-            base_url=self.settings.meta_api_base_url,
+            api_key=self.settings.active_api_key,
+            base_url=self.settings.active_base_url,
             # Muse Spark is a reasoning model. A 20s connector timeout is too
             # short once the model spends tokens on reasoning before emitting
             # the structured tool call, so give AI calls a separate floor.
@@ -99,7 +104,7 @@ class AIExplainService:
             try:
                 outcome = run_tool_loop(
                     client,
-                    model=self.settings.meta_model,
+                    model=self.settings.active_model,
                     messages=messages,
                     submit_tool=tool,
                     registry=registry,
@@ -112,7 +117,7 @@ class AIExplainService:
             return validate_explanation(
                 outcome.payload,
                 result,
-                model=self.settings.meta_model,
+                model=self.settings.active_model,
                 tool_calls_used=outcome.tool_calls_used,
             )
 
@@ -123,7 +128,7 @@ class AIExplainService:
         return validate_explanation(
             payload,
             result,
-            model=self.settings.meta_model,
+            model=self.settings.active_model,
             tool_calls_used=used,
         )
 
@@ -131,7 +136,7 @@ class AIExplainService:
         try:
             return retry_with_backoff(
                 lambda: client.chat.completions.create(
-                    model=self.settings.meta_model,
+                    model=self.settings.active_model,
                     messages=messages,
                     tools=[tool],
                     tool_choice="auto",
