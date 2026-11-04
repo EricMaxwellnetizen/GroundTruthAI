@@ -13,15 +13,15 @@ The hackathon release deliberately ships the narrow, defensible lineage wedge. T
 - CloudWatch Lambda invocation/error/duration evidence.
 - Lambda dependency context: execution role, event source mappings, aliases, tags, function URL/event-invoke metadata when permitted.
 - Evidence graph, timeline, status, match types, confidence rationale, coverage gaps, recommendations, and JSON/Markdown exports with checksums.
-- Meta Muse Spark explanation grounded by evidence IDs, with strict validation and deterministic fallback.
+- Meta Muse Spark explanation grounded by evidence IDs, with a guarded bounded read-only tool loop, strict validation, and deterministic fallback.
+- Optional local Terraform state backup evidence, parsed in memory and treated as candidate-only unless exact live evidence exists.
 - Offline fixture mode with five known-answer cases.
 - Optional MCP adapters with default-deny read-only policy.
 - Ten-page Streamlit UI, SQLite metadata history, tests, Docker packaging, and CI.
 
 ## Phase 1 - Remaining / deliberately deferred
 
-- **Guarded Meta tool-calling loop.** The current client supports Chat Completions tool calling, but a multi-turn internal read-only tool bridge is not enabled. Keep it bounded by explicit tool schemas, read-only classification, allowlists, and deterministic revalidation if added.
-- **Live credential verification.** AWS, Scalr, GitLab, and Meta paths need validation in a real test account with read-only credentials. Do not claim those integrations work until their connection tests succeed.
+- **Live credential verification.** Meta and Scalr `/workspaces` reads were observed live; AWS resource-level reads are blocked by invalid credentials, and Scalr resource usage is blocked by an unset schema-specific filter. Do not claim those integrations work until their connection tests succeed.
 - **Hosted deployment.** A public hosted instance is intentionally not part of this release. It requires authentication, secret management, network controls, and an approved evidence-retention policy.
 
 ## Phase 2 - Brownfield IaC adoption assurance

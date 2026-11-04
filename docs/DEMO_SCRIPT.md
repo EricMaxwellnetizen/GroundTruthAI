@@ -66,4 +66,4 @@ Open **Lineage overview**. Show:
 
 > GroundTruth does not guess who owns production infrastructure. It finds the evidence, or shows exactly where the evidence ends. Deterministic code owns the status; Muse Spark only explains it.
 
-If asked about live data: live connectors are implemented, but this environment has no real credentials, so the demo stays in fixture mode. The Settings page reports unconfigured sources honestly and never marks them connected without a successful connection test.
+If asked about live data: the Meta explanation and Scalr `/workspaces` read were observed live on 4 November 2026; AWS resource-level reads are blocked by invalid credentials, and the Scalr resource-usage filter, GitLab, and MCP remain unconfigured. The demo therefore stays in fixture mode. The Settings page reports unconfigured or failed sources honestly and never marks them connected without a successful connection test.

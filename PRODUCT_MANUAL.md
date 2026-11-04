@@ -230,11 +230,12 @@ Fixture data is synthetic. A visible demo label must stay on the screen and in t
 1. Select **Connect my environment**.
 2. Verify the AWS account and region are correct. Use a sandbox or an account you are authorized to inspect.
 3. Enter or select the Lambda ARN. Prefer the full ARN over a bare name.
-4. Select the source checks: AWS metadata, CloudTrail, CloudWatch, Scalr, Git/local repo and optional AI.
-5. Start the investigation.
-6. Wait for each connector to report its own status. A permission failure is not the same as an empty result.
-7. Review the final status, confidence rationale, current/historical associations and evidence gaps.
-8. Do not interpret a no-match result as proof of manual creation or abandonment.
+4. Optionally expand **Existing Terraform state backup** and upload a `.tfstate` or state JSON file. It is parsed in memory on this machine; raw state, outputs, variables, environment values, sensitive attributes, and secrets are discarded. The parsed summary is user-supplied historical evidence and cannot override exact live evidence.
+5. Select the source checks: AWS metadata, CloudTrail, CloudWatch, Scalr, Git/local repo and optional AI.
+6. Start the investigation.
+7. Wait for each connector to report its own status. A permission failure is not the same as an empty result.
+8. Review the final status, confidence rationale, current/historical associations and evidence gaps.
+9. Do not interpret a no-match result as proof of manual creation or abandonment.
 
 ## 8. Read the investigation result
 
@@ -258,6 +259,12 @@ Fixture data is synthetic. A visible demo label must stay on the screen and in t
 - **Unknown:** insufficient usable evidence.
 
 Confidence is assigned by deterministic rules, not by Muse Spark. GroundTruth should explain the reason for the label.
+
+### 8.4 AI explanation boundaries
+
+When `AI_ENABLED=true` and a key is configured, Muse Spark may explain the already-computed result. The explanation is advisory. It must cite evidence IDs that exist in the bundle and must not change the status, confidence, owners, coverage, or recommendation.
+
+The optional tool loop is bounded: it exposes only read-only tools over the current investigation, enforces turn/call/timeout budgets, aborts repeated calls, validates tool arguments, and rechecks any MCP allowlist immediately before a call. If the model or a tool fails, GroundTruth falls back to a deterministic explanation and keeps the deterministic result.
 
 ### 8.3 Current owner vs historical manager vs creator
 
@@ -384,7 +391,7 @@ Stop and inspect the mode/configuration. All synthetic data must be labelled `DE
 - Use read-only credentials.
 - Do not provide AWS administrator access to GroundTruth.
 - Never share `.env` or tokens.
-- Do not upload full production state files to an LLM.
+- Do not upload full production state files to an LLM. GroundTruth parses uploaded state locally and sends only a minimized summary.
 - Do not send Lambda environment variables or code package URLs to Muse Spark.
 - Restrict repository access to the project required for investigation.
 - Treat AWS tags, resource descriptions and code comments as untrusted input.

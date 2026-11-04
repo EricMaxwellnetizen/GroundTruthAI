@@ -60,6 +60,14 @@ Each source contributes evidence, not certainty. GroundTruth preserves the disti
 
 **Does not prove:** ownership or complete operational state. The current release treats Omni as context only; it is never a required source.
 
+## Local Terraform state backup (optional)
+
+**Input:** a user-supplied `.tfstate` or state JSON file uploaded on the Investigate page.
+
+**Proves:** a historical, point-in-time association between a Terraform address and a Lambda ARN/name in that snapshot, plus non-secret configuration such as runtime, handler, memory, timeout, and last-modified time.
+
+**Does not prove:** current ownership, that the snapshot came from the expected workspace, or that the state was ever applied. The evidence carries `origin=user_supplied`. It can support a candidate lineage but cannot override exact live evidence, resolve insufficient access, or establish a current owner. Raw state, outputs, variables, environment values, sensitive attributes, and secrets are discarded before evidence/export/model use.
+
 ## MCP adapters (optional)
 
 **Configuration:** `GROUNDTRUTH_MCP_SERVERS` plus `GROUNDTRUTH_MCP_ALLOWLIST`.

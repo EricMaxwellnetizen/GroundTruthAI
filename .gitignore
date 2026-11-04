@@ -45,3 +45,7 @@ GroundTruth_Meta_Hackathon_Build_Pack.md
 # Generated demo Git repository and manifest (regenerated at runtime)
 demo-data/*
 !demo-data/.gitkeep
+
+# Generated video media (regenerable from video/*.py; kept locally only)
+video/assets/
+video/clips/

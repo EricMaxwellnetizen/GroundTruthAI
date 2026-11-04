@@ -13,7 +13,11 @@ from groundtruth.utils.redaction import safe_text
 
 TAG_PATTERN = re.compile(r"<[^>]{1,300}>")
 DANGEROUS_SCHEME = re.compile(r"(?i)\b(?:javascript|data|vbscript):")
-UNSAFE_ACTION = re.compile(r"(?i)\b(delete|destroy|apply|terraform\s+apply|tofu\s+apply|import)\b")
+UNSAFE_ACTION = re.compile(r"(?i)\b(?:delete|destroy|apply|terraform\s+apply|tofu\s+apply|import)\b")
+NEGATED_ACTION = re.compile(
+    r"(?i)\b(?:do not|don't|never|avoid|must not|should not|cannot|can't|not recommend|unsafe|blocked)\b"
+)
+
 MAX_FACTS = 20
 MAX_QUESTIONS = 10
 MAX_NEXT_STEPS = 10
@@ -46,7 +50,27 @@ def _check_status_consistency(text: str, result: LineageResult) -> None:
 
 def _check_unsafe_steps(steps: list[AINextStep]) -> None:
     for step in steps:
-        if UNSAFE_ACTION.search(step.step):
+        text = step.step
+        for match in UNSAFE_ACTION.finditer(text):
+            start = max(
+                text.rfind(".", 0, match.start()),
+                text.rfind(";", 0, match.start()),
+                text.rfind("\n", 0, match.start()),
+                0,
+            )
+            end_candidates = [
+                position
+                for position in (
+                    text.find(".", match.end()),
+                    text.find(";", match.end()),
+                    text.find("\n", match.end()),
+                )
+                if position != -1
+            ]
+            end = min(end_candidates) if end_candidates else len(text)
+            sentence = text[start : end + 1]
+            if NEGATED_ACTION.search(sentence):
+                continue
             raise AIValidationError("Model output suggested an autonomous apply, import, destroy, or delete action.")
 
 

@@ -16,3 +16,5 @@ __pycache__
 data/*
 tests
 docs/images
+video/assets
+video/clips

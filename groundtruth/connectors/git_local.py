@@ -20,8 +20,9 @@ from groundtruth.models.lineage import (
 from groundtruth.utils.redaction import safe_text
 
 SHA_PATTERN = re.compile(r"^[0-9a-fA-F]{7,40}$")
-SAFE_TERM = re.compile(r"^[A-Za-z0-9_.:/@+=,-]{1,300}$")
-SAFE_PATH = re.compile(r"^[A-Za-z0-9_./@+=,-]{1,500}$")
+SAFE_TERM = re.compile(r"^(?!-)(?!.*\.\.)[A-Za-z0-9_.:/@+=,-]{1,300}$")
+# Relative Terraform paths only: no absolute paths, drive letters, or ".." segments.
+SAFE_PATH = re.compile(r"^(?!/)(?!.*(?:^|/)\.\.(?:/|$))[A-Za-z0-9_./@+=,-]{1,500}$")
 MAX_GREP_LINES = 40
 MAX_HISTORY_COMMITS = 10
 

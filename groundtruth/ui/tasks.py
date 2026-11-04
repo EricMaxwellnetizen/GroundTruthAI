@@ -10,6 +10,7 @@ import streamlit as st
 from groundtruth.ai import AIExplainService
 from groundtruth.config import Settings
 from groundtruth.exports import build_evidence_bundle
+from groundtruth.models.state_backup import StateBackupEvidence
 from groundtruth.services.orchestrator import InvestigationOrchestrator
 from groundtruth.storage import SqliteInvestigationRepository
 from groundtruth.ui import state
@@ -17,6 +18,7 @@ from groundtruth.utils.redaction import safe_text
 
 STAGES: list[tuple[str, str]] = [
     ("fixture", "Fixture sources"),
+    ("state_backup", "Terraform state backup"),
     ("aws_lambda", "AWS Lambda"),
     ("scalr", "Scalr resource usage"),
     ("git", "Git / repository"),
@@ -96,6 +98,7 @@ def start_live(
     sources: set[str],
     cloudtrail_lookback_days: int,
     cloudwatch_lookback_days: int,
+    state_backup: StateBackupEvidence | None = None,
 ) -> dict[str, Any]:
     task = _new_task(
         "live",
@@ -107,6 +110,7 @@ def start_live(
             "sources": sorted(sources),
             "cloudtrail_lookback_days": cloudtrail_lookback_days,
             "cloudwatch_lookback_days": cloudwatch_lookback_days,
+            "state_backup_filename": state_backup.filename if state_backup else None,
         },
     )
     _update_stage(task, "fixture", "skipped", "Fixture mode not used for a live investigation.")
@@ -121,6 +125,7 @@ def start_live(
             sources,
             cloudtrail_lookback_days,
             cloudwatch_lookback_days,
+            state_backup,
         ),
         daemon=True,
     )
@@ -139,6 +144,7 @@ def _finish_task(task: dict[str, Any], result: Any, settings: Settings) -> None:
 def _run_fixture(task: dict[str, Any], case_id: str) -> None:
     settings = state.settings()
     try:
+        _update_stage(task, "state_backup", "skipped", "State backup upload applies to live investigations.")
         orchestrator = InvestigationOrchestrator(settings)
         result = orchestrator.run_fixture(case_id, progress=_progress_callback(task))
         if task["cancel_requested"]:
@@ -180,10 +186,20 @@ def _run_live(
     sources: set[str],
     cloudtrail_lookback_days: int,
     cloudwatch_lookback_days: int,
+    state_backup: StateBackupEvidence | None = None,
 ) -> None:
     settings = state.settings()
     try:
         orchestrator = InvestigationOrchestrator(settings)
+        if state_backup is None:
+            _update_stage(task, "state_backup", "skipped", "No state backup supplied.")
+        else:
+            _update_stage(
+                task,
+                "state_backup",
+                "done",
+                f"Parsed {state_backup.filename} locally; {len(state_backup.matches)} Lambda resource(s) found.",
+            )
         result = orchestrator.run_live(
             identifier,
             region=region,
@@ -192,6 +208,7 @@ def _run_live(
             sources=sources,
             cloudtrail_lookback_days=cloudtrail_lookback_days,
             cloudwatch_lookback_days=cloudwatch_lookback_days,
+            state_backup=state_backup,
         )
         if task["cancel_requested"]:
             task["status"] = "cancelled"

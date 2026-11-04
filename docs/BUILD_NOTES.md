@@ -1,6 +1,6 @@
 # GroundTruth Build Notes
 
-**Build date:** 2 November 2026
+**Build date:** 4 November 2026
 **Release:** Hackathon MVP 1.0
 **Local toolchain:** `.venv` Python 3.12.13, Streamlit 1.66.1, boto3 1.43, Pydantic 2.14
 
@@ -27,18 +27,18 @@ The repository had no useful application, so the preferred default stack from th
 3. Five labelled fixture cases (current owner, historical owner, duplicate active owners, candidate-only, insufficient access) with a real local Git demo repository.
 4. Read-only live connectors: AWS Lambda, CloudTrail Event History, CloudWatch metrics, Scalr REST, local Git, GitLab REST, Omni link context.
 5. Evidence graph, timeline, coverage, deterministic recommendations, JSON/Markdown exports with checksums.
-6. Meta Muse Spark explanation with strict validation, deterministic fallback, and guarded MCP allow-list registry. The optional multi-turn tool loop is deferred.
+6. Meta Muse Spark explanation with strict validation, deterministic fallback, a guarded bounded read-only tool loop, and default-deny MCP allow-list registry.
 7. Streamlit UI with demo/live modes, background investigations, cancellation, all required screens, and permanent DEMO DATA labelling.
 8. Tests, lint, format, compile, secret scan, dependency audit, clean-start verification.
 9. Docker, CI, documentation, demo script, pitch, screenshots, and delivery report.
 
 ## Final delivery status
 
-- All application layers are implemented: fixture/live orchestration, seven-status engine, AI validation/fallback, exports, SQLite, MCP policy, and ten UI pages.
-- Local verification: 48 tests pass; Ruff lint/format clean; compileall clean; `pip-audit` reports no known vulnerabilities; fresh Streamlit startup and browser fixture flow verified.
+- All application layers are implemented: fixture/live orchestration, seven-status engine, guarded AI tool loop, state-backup evidence, exports, SQLite, MCP policy, and ten UI pages.
+- Local verification: 127 tests pass; Ruff lint/format clean; compileall clean; `pip-audit` reports no known vulnerabilities; AppTest renders all ten pages; fresh Streamlit startup and browser fixture flow were previously verified.
 - Docker packaging verified locally: `groundtruth:1.0.0` built successfully, served `/_stcore/health` with `ok`, and ran as non-root `uid=10001`.
 - Screenshots are in `docs/images/` for Home, Investigate, Lineage, Report, and Multiple active owners.
-- Live AWS, Scalr, GitLab, and Meta API calls remain credential-unverified. The UI reports unconfigured/failed sources and never claims a connection without a successful test.
+- Live Meta Muse Spark explanation verified on 4 November 2026 (`muse-spark-1.3`, 1 tool call, status unchanged). Scalr `/workspaces` read succeeded with 0 records. AWS STS returned `InvalidClientTokenId`; the AWS resource path is blocked pending valid credentials. The Scalr resource-usage filter, GitLab, and MCP remain unconfigured.
 - The Scalr filter remains a required human-supplied, schema-derived value. The demo intentionally uses fixture mode.
 
 ## Assumptions and boundaries

@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from groundtruth.models.connector import utc_now
 from groundtruth.models.lineage import LineageResult
 from groundtruth.models.resource import CloudResource
+from groundtruth.models.state_backup import StateBackupEvidence
 from groundtruth.utils.hashing import sha256_hex
 
 
@@ -50,6 +51,7 @@ class EvidenceBundle(BaseModel):
     recommendation: Any
     ai_explanation: Any | None
     omni: Any | None
+    state_backup: StateBackupEvidence | None = None
     redaction_applied: bool
     integrity: BundleIntegrity | None = None
 
@@ -87,6 +89,7 @@ class EvidenceBundle(BaseModel):
             recommendation=result.recommendation.model_dump(mode="json"),
             ai_explanation=result.ai_explanation.model_dump(mode="json") if result.ai_explanation else None,
             omni=result.omni.model_dump(mode="json") if result.omni else None,
+            state_backup=result.state_backup.model_dump(mode="json") if result.state_backup else None,
             redaction_applied=redaction_applied,
         )
         bundle.attach_checksum()

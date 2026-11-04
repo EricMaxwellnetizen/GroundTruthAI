@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://groundtruth.local/schemas/evidence_bundle.schema.json",
+  "title": "GroundTruth Evidence Bundle",
+  "description": "Stable public shape of a GroundTruth JSON evidence export. The deterministic status, confidence and recommendation are authoritative; the AI explanation is advisory only.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "bundle_type",
+    "schema_version",
+    "exported_at",
+    "investigation_id",
+    "mode",
+    "fixture",
+    "resource",
+    "status",
+    "confidence",
+    "confidence_rule",
+    "status_reason",
+    "confidence_reason",
+    "current_owners",
+    "historical_managers",
+    "repository_lineage",
+    "actors",
+    "cloudtrail_events",
+    "activity",
+    "dependencies",
+    "evidence",
+    "graph",
+    "coverage",
+    "limitations",
+    "unresolved_questions",
+    "recommendation",
+    "ai_explanation",
+    "omni",
+    "state_backup",
+    "redaction_applied",
+    "integrity"
+  ],
+  "properties": {
+    "bundle_type": {"const": "groundtruth.evidence_bundle"},
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "exported_at": {"type": "string", "format": "date-time"},
+    "investigation_id": {"type": "string", "pattern": "^inv_[A-Za-z0-9_-]+$"},
+    "mode": {"enum": ["fixture", "live"]},
+    "fixture": {"type": "boolean"},
+    "resource": {
+      "type": "object",
+      "required": ["provider", "service", "resource_type", "account_id", "region", "name", "tags", "safe_attributes", "fixture"],
+      "properties": {
+        "provider": {"type": "string"},
+        "service": {"type": "string"},
+        "resource_type": {"type": "string"},
+        "account_id": {"type": "string"},
+        "region": {"type": "string"},
+        "name": {"type": "string", "minLength": 1},
+        "arn": {"type": ["string", "null"]},
+        "provider_id": {"type": ["string", "null"]},
+        "observed_at": {"type": "string", "format": "date-time"},
+        "status": {"type": ["string", "null"]},
+        "last_modified_at": {"type": ["string", "null"], "format": "date-time"},
+        "tags": {"type": "object", "additionalProperties": {"type": "string"}},
+        "safe_attributes": {"type": "object"},
+        "fixture": {"type": "boolean"}
+      }
+    },
+    "status": {
+      "enum": [
+        "CURRENT_OWNER_FOUND",
+        "HISTORICAL_OWNER_FOUND",
+        "MULTIPLE_ACTIVE_OWNERS",
+        "CANDIDATE_LINEAGE",
+        "UNATTRIBUTED_IN_CHECKED_SOURCES",
+        "INSUFFICIENT_ACCESS",
+        "IDENTITY_AMBIGUOUS"
+      ]
+    },
+    "confidence": {"enum": ["HIGH", "MEDIUM", "LOW", "UNKNOWN"]},
+    "confidence_rule": {"type": "string"},
+    "status_reason": {"type": "string"},
+    "confidence_reason": {"type": "string"},
+    "current_owners": {"type": "array", "items": {"$ref": "#/$defs/ownership"}},
+    "historical_managers": {"type": "array", "items": {"$ref": "#/$defs/ownership"}},
+    "repository_lineage": {"type": ["object", "null"]},
+    "actors": {"type": "array", "items": {"type": "object", "required": ["source", "identity_type", "evidence_id"]}},
+    "cloudtrail_events": {"type": "array", "items": {"type": "object", "required": ["event_id", "event_time", "event_name", "match_type", "evidence_id"]}},
+    "activity": {"type": ["object", "null"]},
+    "dependencies": {"type": "array", "items": {"type": "object", "required": ["kind", "name", "match_type"]}},
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "evidence_id",
+          "source",
+          "source_label",
+          "observed_at",
+          "match_type",
+          "match_confidence",
+          "facts",
+          "origin"
+        ],
+        "properties": {
+          "evidence_id": {"type": "string", "minLength": 1},
+          "source": {"type": "string"},
+          "source_label": {"type": "string"},
+          "observed_at": {"type": "string", "format": "date-time"},
+          "match_type": {"type": "string"},
+          "match_confidence": {"enum": ["HIGH", "MEDIUM", "LOW", "UNKNOWN"]},
+          "facts": {"type": "object"},
+          "origin": {"enum": ["live", "fixture", "user_supplied", "unknown"]}
+        }
+      }
+    },
+    "graph": {
+      "type": "object",
+      "required": ["nodes", "edges"],
+      "properties": {
+        "nodes": {"type": "array"},
+        "edges": {"type": "array"}
+      }
+    },
+    "coverage": {"type": "array", "items": {"type": "object", "required": ["source", "status", "required"]}},
+    "limitations": {"type": "array", "items": {"type": "string"}},
+    "unresolved_questions": {"type": "array", "items": {"type": "string"}},
+    "recommendation": {
+      "type": "object",
+      "required": ["code", "title", "explanation", "blocked_adoption", "evidence_ids"],
+      "properties": {
+        "code": {"type": "string"},
+        "title": {"type": "string"},
+        "explanation": {"type": "string"},
+        "blocked_adoption": {"type": "boolean"},
+        "evidence_ids": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "ai_explanation": {"type": ["object", "null"]},
+    "omni": {"type": ["object", "null"]},
+    "state_backup": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "required": ["filename", "sha256", "state_version", "resource_count", "matches", "limitations"],
+          "properties": {
+            "filename": {"type": "string"},
+            "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+            "state_version": {"type": "integer"},
+            "terraform_version": {"type": ["string", "null"]},
+            "serial": {"type": ["integer", "null"]},
+            "resource_count": {"type": "integer", "minimum": 0},
+            "matches": {"type": "array"},
+            "limitations": {"type": "array", "items": {"type": "string"}}
+          }
+        }
+      ]
+    },
+    "redaction_applied": {"type": "boolean"},
+    "integrity": {
+      "type": "object",
+      "required": ["algorithm", "checksum", "computed_at", "redaction_applied"],
+      "properties": {
+        "algorithm": {"const": "sha256"},
+        "checksum": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "computed_at": {"type": "string", "format": "date-time"},
+        "redaction_applied": {"type": "boolean"}
+      }
+    }
+  },
+  "$defs": {
+    "ownership": {
+      "type": "object",
+      "required": ["kind", "workspace", "resource_address", "match_type", "evidence_ids"],
+      "properties": {
+        "kind": {"enum": ["current", "historical"]},
+        "workspace": {"type": "object", "required": ["id", "name"]},
+        "resource_address": {"type": "string"},
+        "match_type": {"type": "string"},
+        "evidence_ids": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

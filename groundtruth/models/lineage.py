@@ -19,6 +19,7 @@ from groundtruth.models.enums import (
 from groundtruth.models.evidence import EvidenceRecord, TimelineEntry
 from groundtruth.models.graph import EvidenceGraph
 from groundtruth.models.resource import CloudResource
+from groundtruth.models.state_backup import StateBackupEvidence
 
 
 class WorkspaceRef(BaseModel):
@@ -319,6 +320,7 @@ class LineageResult(BaseModel):
     recommendation: Recommendation
     ai_explanation: AIExplanation | None = None
     omni: OmniContext | None = None
+    state_backup: StateBackupEvidence | None = None
     redaction_applied: bool = False
 
     @property

@@ -9,6 +9,7 @@ class SourceType(str, Enum):
     SCALR_STATE = "scalr_state"
     SCALR_WORKSPACE = "scalr_workspace"
     SCALR_RUN = "scalr_run"
+    TERRAFORM_STATE_BACKUP = "terraform_state_backup"
     GIT_COMMIT = "git_commit"
     GIT_FILE = "git_file"
     CLOUDTRAIL = "cloudtrail"

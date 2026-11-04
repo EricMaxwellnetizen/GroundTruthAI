@@ -5,6 +5,69 @@ import streamlit as st
 from groundtruth.ui import components as ui
 from groundtruth.ui import state
 from groundtruth.ui.tasks import render_task_panel, start_fixture, start_live, task_running
+from groundtruth.models.state_backup import StateBackupEvidence
+from groundtruth.services.state_backup import StateBackupError, parse_state_backup
+
+
+def _state_backup_panel() -> StateBackupEvidence | None:
+    with st.expander("Existing Terraform state backup (optional)", expanded=False):
+        st.caption(
+            "Parsed in memory on this machine. Only Lambda identity and non-secret configuration fields are kept; "
+            "raw state, outputs, variables, environment values and secrets are discarded and never sent to the model."
+        )
+        upload = st.file_uploader(
+            "Upload a .tfstate or state JSON file",
+            type=["json", "tfstate"],
+            key="state_backup_upload",
+        )
+        parse_col, remove_col = st.columns(2)
+        with parse_col:
+            if st.button(
+                "Parse state backup locally",
+                key="parse_state_backup",
+                disabled=upload is None,
+                width="stretch",
+            ):
+                try:
+                    parsed = parse_state_backup(upload.getvalue(), filename=upload.name)
+                except StateBackupError as exc:
+                    st.session_state["state_backup"] = None
+                    st.session_state["state_backup_error"] = str(exc)
+                else:
+                    st.session_state["state_backup"] = parsed
+                    st.session_state["state_backup_error"] = None
+        with remove_col:
+            if st.button("Remove parsed backup", key="remove_state_backup", width="stretch"):
+                st.session_state["state_backup"] = None
+                st.session_state["state_backup_error"] = None
+        error = st.session_state.get("state_backup_error")
+        if error:
+            st.error(f"State backup rejected: {ui.esc(str(error), 300)}")
+        backup = st.session_state.get("state_backup")
+        if not isinstance(backup, StateBackupEvidence):
+            return None
+        st.success(
+            f"Parsed {ui.esc(backup.filename, 160)} locally — {len(backup.matches)} Lambda resource(s), "
+            f"state version {backup.state_version}, serial {backup.serial if backup.serial is not None else 'unknown'}."
+        )
+        st.caption(f"SHA-256 {backup.sha256[:16]}… · user-supplied evidence; not live-verified and not persisted.")
+        if backup.matches:
+            st.dataframe(
+                [
+                    {
+                        "address": match.address,
+                        "function": match.function_name or "",
+                        "arn": match.arn or "",
+                    }
+                    for match in backup.matches[:10]
+                ],
+                hide_index=True,
+                width="stretch",
+            )
+        else:
+            st.warning("No managed aws_lambda_function resource was found in this state file.")
+        st.caption("The backup can support a candidate lineage, but it cannot override exact live evidence.")
+        return backup
 
 
 def _fixture_form() -> None:
@@ -91,6 +154,7 @@ def _live_form() -> None:
         "CloudWatch Omni": "omni",
     }
     sources.update(mapping[item] for item in optional)
+    state_backup = _state_backup_panel()
     st.button(
         "Run live investigation",
         type="primary",
@@ -104,6 +168,7 @@ def _live_form() -> None:
             "sources": sources,
             "cloudtrail_lookback_days": cloudtrail_days,
             "cloudwatch_lookback_days": cloudwatch_days,
+            "state_backup": state_backup,
         },
     )
     if not settings.scalr_configured:

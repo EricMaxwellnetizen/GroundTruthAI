@@ -13,6 +13,21 @@ from dotenv import load_dotenv
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(PROJECT_ROOT / ".env", override=False)
 
+# An intentionally blank .env entry must not become an empty AWS profile or
+# region name. botocore treats "" as a real profile and fails with
+# ProfileNotFound instead of falling back to the default credential chain.
+for _empty_aws_name in (
+    "AWS_PROFILE",
+    "AWS_DEFAULT_PROFILE",
+    "AWS_REGION",
+    "AWS_DEFAULT_REGION",
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY",
+    "AWS_SESSION_TOKEN",
+):
+    if _empty_aws_name in os.environ and not os.environ[_empty_aws_name].strip():
+        os.environ.pop(_empty_aws_name, None)
+
 
 def _bool(name: str, default: bool = False) -> bool:
     value = os.getenv(name)
@@ -85,6 +100,10 @@ class Settings:
     meta_api_base_url: str = "https://api.meta.ai/v1"
     meta_model: str = "muse-spark-1.3"
     ai_enabled: bool = False
+    ai_tool_loop_enabled: bool = True
+    ai_max_tool_turns: int = 4
+    ai_max_tool_calls: int = 8
+    ai_tool_timeout_seconds: int = 120
     cloudwatch_omni_url: str = ""
     cloudwatch_omni_space: str = ""
     cloudtrail_lookback_days: int = 90
@@ -132,6 +151,10 @@ class Settings:
             meta_api_base_url=_text("META_API_BASE_URL", "https://api.meta.ai/v1").rstrip("/"),
             meta_model=_text("META_MODEL", "muse-spark-1.3"),
             ai_enabled=_bool("AI_ENABLED", False),
+            ai_tool_loop_enabled=_bool("GROUNDTRUTH_AI_TOOL_LOOP_ENABLED", True),
+            ai_max_tool_turns=max(1, min(_int("GROUNDTRUTH_AI_MAX_TOOL_TURNS", 4), 4)),
+            ai_max_tool_calls=max(1, min(_int("GROUNDTRUTH_AI_MAX_TOOL_CALLS", 8), 8)),
+            ai_tool_timeout_seconds=max(10, min(_int("GROUNDTRUTH_AI_TOOL_TIMEOUT_SECONDS", 120), 300)),
             cloudwatch_omni_url=_text("CLOUDWATCH_OMNI_URL"),
             cloudwatch_omni_space=_text("CLOUDWATCH_OMNI_SPACE"),
             cloudtrail_lookback_days=max(1, min(_int("GROUNDTRUTH_CLOUDTRAIL_LOOKBACK_DAYS", 90), 90)),

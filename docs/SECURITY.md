@@ -35,7 +35,8 @@ It does not grant `lambda:InvokeFunction`, `lambda:Update*`, `lambda:Delete*`, `
 | --- | --- |
 | Lambda secrets/environment variables | Environment values are not collected or exported. Metadata is redacted. |
 | Code package download URLs | Not retained in evidence or exports. |
-| Terraform state/plans | Never sent to the model. Only normalized Scalr resource-usage fields are used. |
+| Terraform state/plans | Uploaded state is parsed in memory only; raw state, outputs, variables, environment values, sensitive attributes, and secrets are discarded. Only non-secret Lambda identity/configuration and matched addresses may enter evidence or the model bundle. |
+| State upload lifetime | The parsed summary lives in the Streamlit session and the result bundle; the raw file is never written to disk or SQLite. |
 | CloudTrail events | Reduced to timestamp, event name, resource, principal/session context, and source metadata; not stored indefinitely. |
 | Git content | Paths, commit metadata, and small matched snippets only. Entire repositories are not uploaded to the model. |
 | Account IDs | Redacted by default (`********9012`) in exports and many UI views. |
@@ -49,8 +50,10 @@ Tags, descriptions, code comments, commit messages, and resource metadata are tr
 - AI is disabled by default.
 - The prompt contains normalized evidence and explicit limitations, not raw state, plans, secrets, or full repositories.
 - The model must return strict JSON with allowed fields and known evidence IDs.
+- The optional tool loop exposes only read-only tools over the already-computed investigation result. It enforces call/turn/timeout budgets, aborts repeated calls, validates arguments against a fail-closed schema, and rechecks the MCP allowlist immediately before every MCP call.
+- Tools cannot issue new cloud calls or widen the resource scope beyond the current investigation.
 - Validation rejects unknown evidence, extra fields, a different status, unsafe next steps, and uncited claims.
-- Any missing key, network failure, malformed response, or validation error uses a deterministic fallback.
+- Any missing key, network failure, malformed response, tool-loop failure, or validation error uses a deterministic fallback.
 - The model cannot mutate the result, status, confidence, recommendation, or any connector.
 - Model API calls are outbound only to the configured `META_API_BASE_URL`; the default is `https://api.meta.ai/v1`.
 
@@ -64,7 +67,7 @@ MCP is optional and disabled unless `GROUNDTRUTH_MCP_SERVERS` is configured. The
 - classifies unknown or write-capable tools as blocked,
 - treats tool output as untrusted evidence text.
 
-Do not attach MCP servers that can mutate infrastructure. The current release does not include a guarded multi-turn model/tool loop.
+Do not attach MCP servers that can mutate infrastructure. The guarded multi-turn tool loop is bounded, read-only, and default-deny; a tool that is not allowlisted is refused even if the model requests it.
 
 ## Threat model
 

@@ -1,19 +1,21 @@
 from __future__ import annotations
 
 import json
-import re
 from typing import Any
 
 from groundtruth.config import Settings
 from groundtruth.ai.fallback import build_fallback_explanation
 from groundtruth.ai.prompt_builder import build_ai_bundle, explanation_tool_schema, system_prompt, user_prompt
+from groundtruth.ai.tool_loop import ToolLoopError, run_tool_loop
+from groundtruth.ai.tools import InternalToolRegistry, ToolCallRecord
 from groundtruth.ai.validation import AIValidationError, validate_explanation
+from groundtruth.mcp.manager import McpManager
 from groundtruth.models.ai import AIExplanation
 from groundtruth.models.lineage import LineageResult
 from groundtruth.utils.redaction import safe_text
 from groundtruth.utils.retry import retry_with_backoff
 
-JSON_FENCE = re.compile(r"^```(?:json)?\s*|\s*```$", re.IGNORECASE)
+JSON_FENCE_MARKER = "```"
 
 
 class AIUnavailable(RuntimeError):
@@ -28,15 +30,24 @@ def _retryable(exc: BaseException) -> bool:
 
 
 class AIExplainService:
-    def __init__(self, settings: Settings | None = None) -> None:
+    def __init__(
+        self,
+        settings: Settings | None = None,
+        *,
+        mcp_manager: McpManager | None = None,
+    ) -> None:
         self.settings = settings or Settings.from_env()
+        self.mcp_manager = mcp_manager
         self.last_error: str | None = None
+        self.last_tool_calls: list[ToolCallRecord] = []
 
     @property
     def configured(self) -> bool:
         return bool(self.settings.ai_enabled and self.settings.model_api_key)
 
     def explain(self, result: LineageResult) -> AIExplanation:
+        self.last_error = None
+        self.last_tool_calls = []
         if not self.configured:
             return build_fallback_explanation(
                 result,
@@ -45,7 +56,7 @@ class AIExplainService:
             )
         try:
             return self._explain_remote(result)
-        except (AIUnavailable, AIValidationError) as exc:
+        except (AIUnavailable, AIValidationError, ToolLoopError) as exc:
             self.last_error = safe_text(str(exc), limit=500)
             return build_fallback_explanation(
                 result,
@@ -60,31 +71,75 @@ class AIExplainService:
                 model=self.settings.meta_model,
             )
 
-    def _explain_remote(self, result: LineageResult) -> AIExplanation:
+    def _client(self):
         try:
             from openai import OpenAI
         except ImportError as exc:
             raise AIUnavailable("The OpenAI-compatible client package is not installed.") from exc
 
-        client = OpenAI(
+        return OpenAI(
             api_key=self.settings.model_api_key,
             base_url=self.settings.meta_api_base_url,
-            timeout=float(self.settings.request_timeout_seconds),
+            # Muse Spark is a reasoning model. A 20s connector timeout is too
+            # short once the model spends tokens on reasoning before emitting
+            # the structured tool call, so give AI calls a separate floor.
+            timeout=max(90.0, float(self.settings.request_timeout_seconds)),
         )
+
+    def _explain_remote(self, result: LineageResult) -> AIExplanation:
+        client = self._client()
         bundle = build_ai_bundle(result)
         tool = explanation_tool_schema(result.status)
+        messages = [
+            {"role": "system", "content": system_prompt()},
+            {"role": "user", "content": user_prompt(result, bundle)},
+        ]
+        if self.settings.ai_tool_loop_enabled:
+            registry = InternalToolRegistry(result, mcp_manager=self.mcp_manager)
+            try:
+                outcome = run_tool_loop(
+                    client,
+                    model=self.settings.meta_model,
+                    messages=messages,
+                    submit_tool=tool,
+                    registry=registry,
+                    max_turns=self.settings.ai_max_tool_turns,
+                    max_calls=self.settings.ai_max_tool_calls,
+                    timeout_seconds=self.settings.ai_tool_timeout_seconds,
+                )
+            finally:
+                self.last_tool_calls = list(registry.calls)
+            return validate_explanation(
+                outcome.payload,
+                result,
+                model=self.settings.meta_model,
+                tool_calls_used=outcome.tool_calls_used,
+            )
+
+        response = self._single_request(client, messages, tool)
+        message = response.choices[0].message
+        tool_calls = getattr(message, "tool_calls", None) or []
+        payload, used = self._extract_payload(message, tool_calls)
+        return validate_explanation(
+            payload,
+            result,
+            model=self.settings.meta_model,
+            tool_calls_used=used,
+        )
+
+    def _single_request(self, client, messages: list[dict[str, Any]], tool: dict[str, Any]):
         try:
-            response = retry_with_backoff(
+            return retry_with_backoff(
                 lambda: client.chat.completions.create(
                     model=self.settings.meta_model,
-                    messages=[
-                        {"role": "system", "content": system_prompt()},
-                        {"role": "user", "content": user_prompt(result, bundle)},
-                    ],
+                    messages=messages,
                     tools=[tool],
                     tool_choice="auto",
                     temperature=0.1,
-                    max_tokens=1800,
+                    # The evidence bundle is large and Muse Spark reasons
+                    # before calling the tool. 1,800 tokens truncates the
+                    # response before submit_explanation is emitted.
+                    max_tokens=6000,
                 ),
                 max_attempts=2,
                 base_delay=0.6,
@@ -92,19 +147,19 @@ class AIExplainService:
                 should_retry=_retryable,
             )
         except Exception as exc:
-            status = getattr(exc, "status_code", None)
-            if status in {401, 403}:
-                raise AIUnavailable("Meta Model API rejected the API key or model access.") from exc
-            if status == 429:
-                raise AIUnavailable("Meta Model API rate-limited the explanation request.") from exc
-            raise AIUnavailable(f"Meta Model API request failed: {exc.__class__.__name__}.") from exc
+            self._raise_api_error(exc)
 
-        choices = getattr(response, "choices", None) or []
-        if not choices:
-            raise AIUnavailable("Meta Model API returned no choices.")
-        message = choices[0].message
-        tool_calls = getattr(message, "tool_calls", None) or []
-        tool_calls_used = len(tool_calls)
+    @staticmethod
+    def _raise_api_error(exc: BaseException) -> None:
+        status = getattr(exc, "status_code", None)
+        if status in {401, 403}:
+            raise AIUnavailable("Meta Model API rejected the API key or model access.") from exc
+        if status == 429:
+            raise AIUnavailable("Meta Model API rate-limited the explanation request.") from exc
+        raise AIUnavailable(f"Meta Model API request failed: {exc.__class__.__name__}.") from exc
+
+    @staticmethod
+    def _extract_payload(message: Any, tool_calls: list[Any]) -> tuple[dict[str, Any], int]:
         payload: dict[str, Any] | None = None
         for call in tool_calls:
             function = getattr(call, "function", None)
@@ -119,18 +174,20 @@ class AIExplainService:
             content = getattr(message, "content", None)
             if not content:
                 raise AIUnavailable("Meta Model API returned neither a tool call nor text content.")
-            text = JSON_FENCE.sub("", str(content).strip())
+            text = str(content).strip()
+            if text.startswith(JSON_FENCE_MARKER):
+                first_newline = text.find("\n")
+                if first_newline != -1:
+                    text = text[first_newline + 1 :]
+                if text.endswith(JSON_FENCE_MARKER):
+                    text = text[: -len(JSON_FENCE_MARKER)]
             try:
-                payload = json.loads(text)
+                payload = json.loads(text.strip())
             except json.JSONDecodeError as exc:
                 raise AIValidationError("Muse Spark returned text that was not valid JSON.") from exc
-        assert payload is not None
-        return validate_explanation(
-            payload,
-            result,
-            model=self.settings.meta_model,
-            tool_calls_used=tool_calls_used,
-        )
+        if not isinstance(payload, dict):
+            raise AIValidationError("Muse Spark returned JSON that was not an object.")
+        return payload, len(tool_calls)
 
 
 def attach_ai_explanation(result: LineageResult, explanation: AIExplanation) -> LineageResult:

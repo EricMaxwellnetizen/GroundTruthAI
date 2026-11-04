@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -27,6 +27,7 @@ class EvidenceRecord(BaseModel):
     facts: dict[str, Any] = Field(default_factory=dict)
     limitations: list[str] = Field(default_factory=list)
     sensitivity: Sensitivity = Sensitivity.INTERNAL
+    origin: Literal["live", "fixture", "user_supplied", "unknown"] = "unknown"
     fixture: bool = False
 
     @field_validator("observed_at", "queried_at")

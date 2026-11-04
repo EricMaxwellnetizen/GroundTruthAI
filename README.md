@@ -25,7 +25,8 @@ GroundTruth answers one narrow, high-value question:
 - **Fixture mode** that works offline with five known-answer cases.
 - **Read-only live connectors** for AWS Lambda, IAM role metadata, CloudTrail, CloudWatch metrics, Scalr, local Git, optional GitLab, and optional CloudWatch Omni context.
 - **Deterministic ownership engine** with exact-identity match tiers and seven terminal statuses.
-- **Muse Spark explanation** with strict citation validation and a deterministic fallback.
+- **Muse Spark explanation** with a guarded, bounded read-only tool loop, strict citation validation, and a deterministic fallback.
+- **Optional local Terraform state backup** parsed in memory as user-supplied historical evidence; raw state is never persisted or sent to the model.
 - **Ten-page Streamlit workspace**: overview, investigation, inventory, lineage, evidence graph, timeline, dependencies, AI explanation, report, and settings.
 - **Checksummed exports** in JSON and Markdown, with account IDs redacted by default.
 - **SQLite metadata history** for completed investigations.
@@ -92,7 +93,11 @@ Status is selected by deterministic code, never by the language model:
 5. Historical exact ownership is not current ownership.
 6. Missing permissions or incomplete pagination produce a coverage gap, not an empty result.
 
-The AI explanation is advisory. It must cite known evidence IDs and use the deterministic status. Invalid or unavailable AI output falls back to a grounded deterministic explanation.
+The AI explanation is advisory. It must cite known evidence IDs and use the deterministic status. A bounded tool loop lets the model request only read-only facts already held in the current investigation result; call count, turns, repeated calls, and timeout are capped. Invalid or unavailable AI output falls back to a grounded deterministic explanation.
+
+## Optional Terraform state backup
+
+The Investigate page can parse a user-supplied `.tfstate` or state JSON file locally. GroundTruth keeps only Lambda identity and non-secret configuration fields, strips outputs, variables, environment values, sensitive attributes, and raw state, and never persists the upload. The result is labelled `user_supplied` and can support a `CANDIDATE_LINEAGE`; it can never override exact live evidence or turn an access gap into an owner.
 
 ## Statuses and confidence
 
@@ -121,7 +126,7 @@ The Scalr filter value is deliberately **not hardcoded**. Obtain the required `f
 - Meta: set `MODEL_API_KEY`, `META_API_BASE_URL`, `META_MODEL`, and `AI_ENABLED=true`. AI is optional.
 - Omni: optional link/context only unless a documented connector is verified.
 
-> Live connectors and Meta API calls were implemented but could not be exercised against real credentials in this build environment. The UI reports unconfigured or failed sources honestly; do not treat a configured value as a successful connection test.
+> **Observed live results (4 November 2026).** Meta Muse Spark returned a valid explanation for Case A (`muse-spark-1.3`, 1 tool call, deterministic status unchanged). A read-only Scalr `/workspaces` call succeeded with 0 workspaces returned. AWS STS returned `InvalidClientTokenId`, so AWS resource-level verification is blocked until valid credentials are supplied. `SCALR_TF_RESOURCE_USAGE_FILTER`, `GIT_REPO_PATH`, GitLab, and MCP remain unset, so those joins are fixture-only or blocked. A configured value is never treated as a successful connection test.
 
 ## Quality checks
 
@@ -139,9 +144,9 @@ python -m compileall -q app.py groundtruth tests
 python -m pip_audit
 ```
 
-Current local result: **48 tests passed**, Ruff clean, formatting clean, compile clean, and `pip-audit` found no known vulnerabilities.
+Current local result: **127 tests passed**, Ruff clean, formatting clean, compile clean, and `pip-audit` found no known vulnerabilities.
 
-The test suite covers fixture determinism and progress, identity rules, exact-match guardrails, Scalr JSON:API parsing, export redaction/checksums, storage, AI validation/fallback, MCP policy, and all ten Streamlit pages.
+The test suite covers fixture determinism and progress, identity/ARN rules, exact-match guardrails, CloudTrail/CloudWatch/Scalr/Git/GitLab connector behavior and failure modes, export redaction/checksums and JSON Schema validation, SQLite storage, AI validation/fallback, guarded tool-loop budgets and refusals, MCP transport/allowlist policy, Terraform state-backup safety, prompt-injection containment, and all ten Streamlit pages.
 
 ## Docker
 
@@ -162,8 +167,9 @@ Streamlit UI
        ├─ AWS Lambda / CloudTrail / CloudWatch connectors
        ├─ Scalr resource-usage, workspace, run, state connectors
        ├─ local Git / optional GitLab
+       ├─ optional local Terraform state backup (in-memory)
        ├─ deterministic LineageEngine
-       ├─ AIExplainService (Muse Spark or grounded fallback)
+       ├─ AIExplainService (Muse Spark bounded read-only tool loop or grounded fallback)
        ├─ EvidenceBundle export (JSON / Markdown, SHA-256)
        └─ SQLite metadata repository
 ```

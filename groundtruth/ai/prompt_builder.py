@@ -42,6 +42,21 @@ _SAFE_EVIDENCE_FACTS = {
     "name",
     "relationship",
     "space",
+    "address",
+    "provider",
+    "arn",
+    "role_arn",
+    "function_name",
+    "runtime",
+    "handler",
+    "memory_size",
+    "timeout",
+    "sha256",
+    "serial",
+    "terraform_version",
+    "origin",
+    "resource_type",
+    "last_modified",
 }
 
 
@@ -65,7 +80,8 @@ def _safe_evidence_facts(facts: dict[str, Any]) -> dict[str, Any]:
             continue
         value = facts[key]
         if isinstance(value, str):
-            safe[key] = _text(value, limit=600)
+            text = _text(value, limit=600)
+            safe[key] = redact_arn(text) if key == "arn" or key.endswith("_arn") else text
         elif isinstance(value, (bool, int, float)) or value is None:
             safe[key] = value
     if isinstance(facts.get("tags"), dict):
@@ -191,6 +207,17 @@ def build_ai_bundle(result: LineageResult) -> dict[str, Any]:
         "evidence": evidence,
         "limitations": [_text(item, limit=500) for item in result.limitations[:12]],
         "unresolved_questions": [_text(item, limit=400) for item in result.unresolved_questions[:10]],
+        "state_backup": {
+            "origin": "user_supplied",
+            "filename": _text(result.state_backup.filename, limit=200),
+            "sha256": result.state_backup.sha256,
+            "serial": result.state_backup.serial,
+            "terraform_version": result.state_backup.terraform_version,
+            "matched_addresses": [match.address for match in result.state_backup.matches[:10]],
+            "limitations": [_text(item, limit=400) for item in result.state_backup.limitations[:6]],
+        }
+        if result.state_backup
+        else None,
         "recommendation": {
             "code": result.recommendation.code.value,
             "title": _text(result.recommendation.title),

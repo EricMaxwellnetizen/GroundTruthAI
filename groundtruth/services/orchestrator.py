@@ -18,6 +18,7 @@ from groundtruth.models.connector import ConnectorResult
 from groundtruth.models.enums import ConnectorStatus
 from groundtruth.models.lineage import LineageResult, RunEvidence, ScalrDataset, WorkspaceRef
 from groundtruth.models.resource import CloudResource
+from groundtruth.models.state_backup import StateBackupEvidence
 from groundtruth.services.identity import IdentityError, is_lambda_arn, normalize_lambda_identity, parse_lambda_arn
 from groundtruth.services.lineage_engine import LineageEngine
 
@@ -68,6 +69,7 @@ class InvestigationOrchestrator:
         sources: set[str] | None = None,
         cloudtrail_lookback_days: int | None = None,
         cloudwatch_lookback_days: int | None = None,
+        state_backup: StateBackupEvidence | None = None,
     ) -> LineageResult:
         enabled_sources = sources or {"aws", "scalr", "git", "cloudtrail", "cloudwatch", "omni"}
         text = (identifier or "").strip()
@@ -218,6 +220,7 @@ class InvestigationOrchestrator:
             cloudwatch_result=cloudwatch_result,
             omni_result=omni_result,
             mode="live",
+            state_backup=state_backup,
         )
         self._safe_progress(progress, "correlation", "done", "Lineage correlated.")
         return result

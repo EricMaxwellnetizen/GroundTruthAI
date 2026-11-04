@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Literal
 
 from groundtruth.models.enums import ConfidenceLabel, MatchType, Sensitivity, SourceType
 from groundtruth.models.evidence import EvidenceRecord
@@ -13,6 +13,7 @@ SOURCE_SHORT = {
     SourceType.SCALR_STATE: "state",
     SourceType.SCALR_WORKSPACE: "ws",
     SourceType.SCALR_RUN: "run",
+    SourceType.TERRAFORM_STATE_BACKUP: "tfs",
     SourceType.GIT_COMMIT: "gitc",
     SourceType.GIT_FILE: "gitf",
     SourceType.CLOUDTRAIL: "ct",
@@ -55,6 +56,7 @@ class EvidenceFactory:
         limitations: list[str] | None = None,
         sensitivity: Sensitivity = Sensitivity.INTERNAL,
         fixture: bool = False,
+        origin: Literal["live", "fixture", "user_supplied", "unknown"] | None = None,
     ) -> EvidenceRecord:
         return EvidenceRecord(
             evidence_id=self.evidence_id(source, record_id, resource_identity),
@@ -72,5 +74,6 @@ class EvidenceFactory:
             facts=facts or {},
             limitations=limitations or [],
             sensitivity=sensitivity,
+            origin=origin or ("fixture" if fixture else "live"),
             fixture=fixture,
         )

@@ -35,8 +35,10 @@ from groundtruth.models.lineage import (
     ScalrDataset,
 )
 from groundtruth.models.resource import CloudResource
+from groundtruth.models.state_backup import StateBackupEvidence
 from groundtruth.services.evidence_factory import EvidenceFactory
 from groundtruth.services.identity import IdentityError, is_lambda_arn, match_external_identity, parse_lambda_arn
+from groundtruth.services.state_backup import select_state_backup_match
 from groundtruth.utils.hashing import sha256_hex
 from groundtruth.utils.redaction import redact_tags, safe_text
 from groundtruth.utils.urls import build_aws_console_url
@@ -107,6 +109,7 @@ class LineageEngine:
         cloudwatch_result: ConnectorResult,
         omni_result: ConnectorResult,
         mode: str | None = None,
+        state_backup: StateBackupEvidence | None = None,
     ) -> LineageResult:
         fixture = any(
             [
@@ -224,6 +227,56 @@ class LineageEngine:
         )
 
         identity_conflict = False
+        state_backup_exact = False
+        if state_backup is not None:
+            selected_state = select_state_backup_match(state_backup, resource)
+            if selected_state is not None:
+                state_match, state_match_type, state_match_confidence, state_match_reason = selected_state
+                state_backup_exact = state_match_type == MatchType.EXACT_ARN
+                state_evidence = add_evidence(
+                    factory.create(
+                        source=SourceType.TERRAFORM_STATE_BACKUP,
+                        source_label="User-supplied Terraform state backup",
+                        observed_at=state_backup.parsed_at,
+                        resource_identity=resource.identity,
+                        match_type=state_match_type,
+                        record_id=f"{state_backup.sha256}:{state_match.address}",
+                        facts={
+                            "title": f"User-supplied state address {state_match.address}",
+                            "detail": (
+                                f"State snapshot {state_backup.filename} "
+                                f"(serial {state_backup.serial if state_backup.serial is not None else 'unknown'}) "
+                                f"contains {state_match.address}. {state_match_reason}"
+                            ),
+                            "address": state_match.address,
+                            "provider": state_match.provider,
+                            "arn": state_match.arn,
+                            "role_arn": state_match.role_arn,
+                            "function_name": state_match.function_name,
+                            "runtime": state_match.runtime,
+                            "handler": state_match.handler,
+                            "memory_size": state_match.memory_size,
+                            "timeout": state_match.timeout,
+                            "sha256": state_backup.sha256,
+                            "serial": state_backup.serial,
+                            "terraform_version": state_backup.terraform_version,
+                            "origin": "user_supplied",
+                        },
+                        account_id=resource.account_id,
+                        region=resource.region,
+                        match_confidence=state_match_confidence,
+                        limitations=[
+                            *state_backup.limitations,
+                            state_match_reason,
+                            "User-supplied state cannot override exact live evidence.",
+                        ],
+                        sensitivity=Sensitivity.INTERNAL,
+                        fixture=fixture,
+                        origin="user_supplied",
+                    )
+                )
+                if state_evidence is not None and not state_backup_exact:
+                    candidate_evidence_ids.append(state_evidence.evidence_id)
         dataset = scalr_result.data if isinstance(scalr_result.data, ScalrDataset) else ScalrDataset()
         seen_workspaces: set[str] = set()
         seen_runs: set[str] = set()
@@ -919,6 +972,7 @@ class LineageEngine:
             git_candidate,
             git_exact_evidence,
             identity_conflict,
+            state_backup_exact,
         )
         recommendation = self._recommend(
             status,
@@ -940,10 +994,30 @@ class LineageEngine:
             omni_result,
             dataset,
         )
+        if state_backup is not None:
+            coverage.append(
+                CoverageRecord(
+                    source="terraform_state_backup",
+                    status=ConnectorStatus.SUCCESS,
+                    required=False,
+                    queried_at=state_backup.parsed_at,
+                    records=len(state_backup.matches),
+                    notes=[
+                        "Locally parsed user-supplied Terraform state snapshot; raw state was not persisted or sent to the model.",
+                        f"Snapshot SHA-256: {state_backup.sha256}.",
+                        *state_backup.limitations,
+                    ],
+                    fixture=fixture,
+                )
+            )
 
         limitations.extend(
             self._limitations(resource, scalr_result, git_lineage, cloudtrail_result, activity, omni, fixture)
         )
+        if state_backup is not None:
+            limitations.append(
+                "A user-supplied Terraform state snapshot is point-in-time evidence and cannot establish current ownership."
+            )
         unresolved.extend(
             self._unresolved_questions(
                 status,
@@ -987,6 +1061,7 @@ class LineageEngine:
             unresolved_questions=_dedupe(unresolved),
             recommendation=recommendation,
             omni=omni,
+            state_backup=state_backup,
             redaction_applied=False,
         )
 
@@ -1300,6 +1375,7 @@ class LineageEngine:
         git_candidate: bool,
         git_exact_evidence: bool,
         identity_conflict: bool,
+        state_backup_exact: bool = False,
     ) -> tuple[LineageStatus, ConfidenceLabel, str, str, str]:
         if not resource.account_id or not resource.region:
             return (
@@ -1382,6 +1458,14 @@ class LineageEngine:
                 if confidence == ConfidenceLabel.HIGH
                 else "MEDIUM: exact historical association found, but required coverage is incomplete.",
                 confidence_reason,
+            )
+        if state_backup_exact:
+            return (
+                LineageStatus.CANDIDATE_LINEAGE,
+                ConfidenceLabel.MEDIUM,
+                "No live Scalr state binding was found, but the user-supplied state snapshot contains the exact ARN.",
+                "MEDIUM: exact identity in a user-supplied snapshot without a live state/workspace association.",
+                "The uploaded snapshot is point-in-time and unverified; it cannot prove current management by itself.",
             )
         if git_candidate or candidate_evidence_ids:
             if git_exact_evidence:
