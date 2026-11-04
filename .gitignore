@@ -1,7 +1,5 @@
 # Secrets and local configuration
 .env
-.env.*
-!.env.example
 .streamlit/secrets.toml
 
 # Python
@@ -45,7 +43,14 @@ GroundTruth_Meta_Hackathon_Build_Pack.md
 # Generated demo Git repository and manifest (regenerated at runtime)
 demo-data/*
 !demo-data/.gitkeep
+GroundTruth_Demo/
 
 # Generated video media (regenerable from video/*.py; kept locally only)
 video/assets/
 video/clips/
+video/out/
+video/*.py
+
+# Local environment overrides
+.env.local
+.env.*.local
