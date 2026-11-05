@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.3.0 - 2026-11-05
+
+Winning-features release (judge-stage aligned).
+
+### Added
+
+- **Risk command queue (Overview):** every function ranked instantly by deterministic risk (status, activity, coverage gaps) with progress bars and next actions — fleet triage without waiting for investigations.
+- **Ask GroundTruth copilot (AI explanation):** suggested + free-form questions answered from the investigation bundle. Muse Spark / Llama answers must cite known evidence IDs or the deterministic grounded answer is used instead.
+- **Trust & evaluation panel:** reproducible scenario accuracy (8/8), citation validity, and the engine's guarantees, visible in-product.
+- **Conflict resolution wizard:** for duplicate owners, pick the authoritative workspace and preview exactly which state bindings get removed before executing.
+- **Usage & cost signal (Dependencies):** invocations/day, disclosed-formula cost estimate, and idle-candidate flag from observed CloudWatch metrics.
+
 ## 1.2.0 - 2026-11-05
 
 Production-grade operations release.

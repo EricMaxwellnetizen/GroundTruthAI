@@ -69,6 +69,12 @@ def _action_center(result) -> None:
         )
         if not known or target == "(type a workspace name)":
             target = st.text_input("Target workspace name", key="action_target_text")
+    if kind == ActionKind.REATTRIBUTE and len(result.current_owners) > 1 and target:
+        others = [o.workspace.name for o in result.current_owners if o.workspace.name != target]
+        st.info(
+            f"Resolution preview: **{target}** stays authoritative. Duplicate state bindings in {', '.join(others) or '—'} "
+            "are removed via reviewed `terraform state rm` changes (never hand-edited state), then this investigation is re-run to confirm one owner."
+        )
     plan = plan_action(result, kind, target_workspace=target or None)
     with st.container(border=True):
         if not plan.eligible:

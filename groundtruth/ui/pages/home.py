@@ -60,45 +60,56 @@ def _automation_panel(settings, cases) -> None:
     from pathlib import Path
 
     from groundtruth.services.actions import ActionExecutor
-    from groundtruth.services.automation import AutomationPolicy, run_automation, scan_attention
+    from groundtruth.services.automation import AutomationPolicy, run_automation
 
-    orchestrator = state.orchestrator()
-    results = []
-    for case in cases:
-        try:
-            results.append(orchestrator.run_fixture(case["case_id"]))
-        except Exception:
-            continue
-    attention = scan_attention(results)
+    from groundtruth.services.risk import queue_from_cases
+
+    ranked = queue_from_cases(cases)
+    ui.section(
+        "Risk command queue",
+        "Every function ranked by deterministic risk (status, activity, coverage). Critical items first — this is your triage order for the day.",
+    )
+    st.dataframe(
+        pd.DataFrame(
+            [
+                {
+                    "Function": item.function_name,
+                    "Risk": item.score,
+                    "Band": item.band,
+                    "Outcome": ui.status_label(item.status),
+                    "Next action": item.next_action,
+                    "Why": " · ".join(item.factors[1:]) or item.factors[0],
+                }
+                for item in ranked
+            ]
+        ),
+        hide_index=True,
+        width="stretch",
+        column_config={"Risk": st.column_config.ProgressColumn(min_value=0, max_value=100, format="%d")},
+    )
+    attention_count = sum(1 for item in ranked if item.status != "CURRENT_OWNER_FOUND")
     ui.section(
         "Needs attention",
-        f"{len(attention)} function(s) need an ownership decision. Automation prepares reattributions for historical owners; disputes and deletions always wait for a human.",
+        f"{attention_count} function(s) need an ownership decision. Automation prepares reattributions for historical owners; disputes and deletions always wait for a human.",
     )
-    if attention:
-        st.dataframe(
-            pd.DataFrame(
-                [
-                    {
-                        "Function": item.function_name,
-                        "Outcome": ui.status_label(item.status),
-                        "Suggested": item.suggested_action,
-                        "Auto-eligible": item.auto_eligible,
-                    }
-                    for item in attention
-                ]
-            ),
-            hide_index=True,
-            width="stretch",
-        )
     policy = AutomationPolicy(enabled=settings.automation_enabled)
     st.caption(
         f"Automation policy: {'enabled' if policy.enabled else 'disabled'} (Settings → Automation & freshness). Live mode is plan-only."
     )
-    if st.button("Run automation sweep", key="home_automation_run", disabled=not attention):
-        executor = ActionExecutor(
-            Path(settings.project_root) / ".groundtruth" / "action_audit.jsonl", allow_live=settings.allow_live_actions
-        )
-        outcomes = run_automation(results, policy, executor)
+    if st.button("Run automation sweep", key="home_automation_run"):
+        orchestrator = state.orchestrator()
+        with st.spinner("Investigating every function and applying the policy…"):
+            results = []
+            for case in cases:
+                try:
+                    results.append(orchestrator.run_fixture(case["case_id"]))
+                except Exception:
+                    continue
+            executor = ActionExecutor(
+                Path(settings.project_root) / ".groundtruth" / "action_audit.jsonl",
+                allow_live=settings.allow_live_actions,
+            )
+            outcomes = run_automation(results, policy, executor)
         for outcome in outcomes:
             st.markdown(f"- **{outcome['function']}** — {outcome['outcome']}: {outcome['detail']}")
 

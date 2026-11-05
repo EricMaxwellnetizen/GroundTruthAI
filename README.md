@@ -16,11 +16,11 @@ The deterministic engine owns the status and confidence. Meta Muse Spark can exp
 >
 > | Rubric lens | Where to verify | Evidence |
 > | --- | --- | --- |
-> | Meta AI depth | AI explanation page; `groundtruth/ai/` | Tool loop with budgets/allowlist, citation validation, fallback; Llama option |
+> | Meta AI depth | AI explanation → **Ask GroundTruth**; `groundtruth/ai/`, `services/copilot.py` | Interactive copilot + tool loop with budgets/allowlist, citation validation, fallback; Llama option |
 > | Innovation | Lineage engine; scenario B/G | Exact-identity ownership graph, duplicate hard stop, cross-account guardrail — not another inventory/chatbot |
-> | Impact | Overview "Needs attention"; Action Center | Prevents duplicate-state outages; governed reattribute/retire with audit log |
-> | Technical quality | `python -m pytest -q` (140+ tests) | Deterministic statuses, checksummed exports, redaction, Docker, CI |
-> | Completeness | All 10 pages; 8 scenarios | Every terminal status covered; live mode from UI credentials; works with AI off |
+> | Impact | **Risk command queue**; Action Center; conflict wizard | Fleet triage in seconds; prevents duplicate-state outages; governed reattribute/retire with audit log |
+> | Technical quality | `python -m pytest -q` (148 tests) | Deterministic statuses + in-product Trust panel (8/8 accuracy), checksummed exports, Docker, CI |
+> | Completeness | All 10 pages; 8 scenarios; cost/idle signals | Every terminal status covered; live mode from UI credentials; works with AI off |
 
 > **Simulated environment (default).** The console opens against the Northgate Production mirror — payloads shaped like live AWS, Scalr, GitLab, CloudTrail and CloudWatch responses (real-format ARNs, workspace/run IDs, commit SHAs, principal ARNs). No live account is queried until live mode is configured and its connection test succeeds.
 

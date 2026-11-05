@@ -84,3 +84,80 @@ def render() -> None:
         "The AI explanation is advisory. The deterministic status, confidence, and recommendation on the Lineage and "
         "Evidence report pages are authoritative."
     )
+
+    _copilot(result)
+    _trust_panel(result)
+
+
+def _copilot(result) -> None:
+    from groundtruth.services.copilot import SUGGESTED_QUESTIONS, CopilotService
+
+    ui.section(
+        "Ask GroundTruth",
+        "Grounded copilot over this investigation. Answers cite evidence IDs or fall back deterministically.",
+    )
+    settings = state.settings()
+    provider = "Llama open weights" if settings.ai_provider == "llama_open_weights" else "Muse Spark"
+    st.caption(
+        f"Provider: {provider} ({settings.active_model})"
+        if settings.ai_configured
+        else "Deterministic copilot (configure a model in Settings for Muse Spark / Llama)."
+    )
+    cols = st.columns(len(SUGGESTED_QUESTIONS))
+    picked = None
+    for col, question in zip(cols, SUGGESTED_QUESTIONS):
+        with col:
+            if st.button(question, key=f"copilot_q_{question[:18]}", width="stretch"):
+                picked = question
+    typed = st.chat_input("Ask about owner, actors, safety, evidence…", key="copilot_input")
+    question = typed or picked
+    history = st.session_state.setdefault("copilot_history", [])
+    if question:
+        with st.spinner("Checking the evidence…"):
+            answer = CopilotService(settings).ask(result, question)
+        history.append((question, answer))
+        st.session_state["copilot_history"] = history[-6:]
+    for past_q, past_a in history:
+        with st.chat_message("user"):
+            st.write(past_q)
+        with st.chat_message("assistant"):
+            st.write(past_a.answer)
+            st.caption(f"Source: {past_a.generated_by}" + (f" · {past_a.model}" if past_a.model else ""))
+            ui.evidence_chips(past_a.evidence_ids, result=result)
+
+
+def _trust_panel(result) -> None:
+    ui.section(
+        "Trust & evaluation",
+        "Self-checks judges can reproduce. Deterministic verdicts are scored against every known-answer scenario.",
+    )
+    orchestrator = state.orchestrator()
+    cases = orchestrator.list_fixture_cases()
+    correct = 0
+    for case in cases:
+        try:
+            outcome = orchestrator.run_fixture(case["case_id"])
+        except Exception:
+            continue
+        if outcome.status.value == case.get("expected_status") and outcome.confidence.value == case.get(
+            "expected_confidence"
+        ):
+            correct += 1
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.metric("Scenario accuracy", f"{correct}/{len(cases)}")
+    with c2:
+        known = set(result.evidence_ids)
+        cited = [
+            fid
+            for fact in (result.ai_explanation.established_facts if result.ai_explanation else [])
+            for fid in fact.evidence_ids
+        ]
+        valid = sum(1 for fid in cited if fid in known)
+        st.metric("Citation validity", f"{valid}/{len(cited)}" if cited else "n/a")
+    with c3:
+        st.metric("Evidence records", str(len(result.evidence)))
+    st.caption(
+        "Guarantees: weak name matches never override exact identity; two active owners hard-block adoption; "
+        "tag/commit text is treated as untrusted data, never as instructions; the model cannot change status, confidence, or ownership."
+    )

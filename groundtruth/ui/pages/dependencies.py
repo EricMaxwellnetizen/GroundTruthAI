@@ -107,6 +107,31 @@ def render() -> None:
 
     ui.section("CloudWatch activity", "Metrics show activity, not who changed the resource.")
     _activity(result.activity)
+    _cost_signal(result)
+
+
+def _cost_signal(result) -> None:
+    act = result.activity
+    if act is None:
+        return
+    ui.section("Usage & cost signal", "Deterministic estimate from observed metrics — a triage signal, not a bill.")
+    memory_mb = float(result.resource.safe_attributes.get("memory_size") or 512)
+    avg_ms = float(act.average_duration_ms or 200.0)
+    gb_seconds = act.total_invocations * (avg_ms / 1000.0) * (memory_mb / 1024.0)
+    est = act.total_invocations / 1_000_000 * 0.20 + gb_seconds * 0.0000166667
+    days = max(1.0, (act.window_end - act.window_start).total_seconds() / 86400)
+    per_day = act.total_invocations / days
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        ui.metric("Invocations / day", f"{per_day:,.0f}")
+    with c2:
+        ui.metric("Est. cost (window)", f"${est:,.2f}")
+    with c3:
+        ui.metric("Signal", "Idle candidate" if act.no_datapoints or per_day < 1 else "Active")
+    st.caption(
+        f"Estimate formula: requests (${0.20}/1M) + GB-seconds at ${0.0000166667}/GB-s using {memory_mb:.0f} MB × {avg_ms:.0f} ms average over {act.total_invocations:,.0f} invocations. "
+        "Idle means no datapoints/low traffic in this window only — confirm with owners before any retirement."
+    )
 
     ui.section("CloudWatch Omni")
     omni = result.omni
