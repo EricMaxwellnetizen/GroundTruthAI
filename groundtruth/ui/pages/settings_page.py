@@ -233,6 +233,38 @@ def _automation_and_freshness(settings) -> None:
         st.cache_resource.clear()
         st.success("Policy saved.")
         st.rerun()
+    from groundtruth.services.freshness_agent import FreshnessAgent
+
+    if st.button("Run freshness agent — watch docs & auto-update", key="fresh_agent", type="primary"):
+        with st.spinner("Fetching official docs, diffing hashes, applying safe updates…"):
+            run = FreshnessAgent(Path(settings.project_root) / ".groundtruth", settings).run()
+        st.session_state["freshness_run"] = run
+    run = st.session_state.get("freshness_run")
+    if run is not None:
+        st.dataframe(
+            pd.DataFrame(
+                [
+                    {
+                        "Connector": w.connector,
+                        "Reachable": w.reachable,
+                        "Changed": w.changed,
+                        "Hash": w.current_hash or "—",
+                        "Action": w.action,
+                    }
+                    for w in run.watches
+                ]
+            ),
+            hide_index=True,
+            width="stretch",
+        )
+        for update in run.updates_applied:
+            st.success(update)
+        st.caption(
+            f"AI analysis used: {run.ai_used}. Structural code changes are drafted as a patch proposal (reviewed commit), never rewritten unattended."
+        )
+        if run.patch_proposal:
+            with st.expander("Patch proposal", expanded=False):
+                st.markdown(run.patch_proposal)
     store = FreshnessStore(Path(settings.project_root) / ".groundtruth" / "freshness.json")
     if st.button("Check connector freshness now", key="fresh_check"):
         report = check_freshness(interval_days=settings.freshness_interval_days)

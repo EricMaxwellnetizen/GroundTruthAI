@@ -117,7 +117,9 @@ def _automation_panel(settings, cases) -> None:
 def render() -> None:
     settings = state.settings()
     cases = state.orchestrator().list_fixture_cases()
-    inventory = state.orchestrator().fixture_inventory()
+    from groundtruth.services.risk import queue_from_cases as _queue
+
+    inventory_count = len(_queue(cases))
     ui.header(
         "Northgate Production · ap-south-1",
         "Operations overview",
@@ -129,7 +131,7 @@ def render() -> None:
     gaps = sum(1 for c in cases if c.get("expected_status") == "INSUFFICIENT_ACCESS")
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        ui.metric("Functions tracked", str(len(inventory)), "Distinct functions in the current environment")
+        ui.metric("Functions tracked", str(inventory_count), "Distinct functions in the current environment")
     with col2:
         ui.metric(
             "Ownership conflicts",

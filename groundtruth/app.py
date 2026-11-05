@@ -42,8 +42,8 @@ def _sidebar() -> None:
     st.sidebar.markdown(
         '<div style="padding:0.6rem 0.2rem 0.9rem;">'
         '<div style="display:flex;align-items:center;gap:0.55rem;">'
-        '<div style="width:34px;height:34px;border-radius:9px;background:#0F766E;display:flex;align-items:center;justify-content:center;'
-        'font-weight:800;font-size:0.95rem;color:#FFFFFF;">GT</div>'
+        '<div style="width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,#0F766E,#06B6D4);display:flex;align-items:center;justify-content:center;'
+        'font-weight:850;font-size:0.95rem;color:#FFFFFF;box-shadow:0 6px 18px rgba(6,182,212,.45);">GT</div>'
         '<div><div style="font-size:1.02rem;font-weight:750;color:#FFFFFF;line-height:1.1;">GroundTruth</div>'
         '<div style="font-size:0.7rem;color:#94A3B8;letter-spacing:0.06em;">CLOUD LINEAGE CONSOLE</div></div></div>'
         '<div style="margin-top:0.65rem;font-size:0.82rem;color:#CBD5E1;line-height:1.45;">Find the owner before you touch the resource.</div>'
