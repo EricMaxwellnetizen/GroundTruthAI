@@ -82,6 +82,7 @@ def inject_css() -> None:
     --gt-navy:#0B1526;
   }
   .stApp { background: var(--gt-bg); }
+  [data-testid="stAppDeployButton"], .stDeployButton, [data-testid="stDeployButton"] { display: none !important; visibility: hidden !important; }
   .block-container { padding-top: 1.6rem; padding-bottom: 2rem; max-width: 1360px; }
   [data-testid="stSidebar"] { background: var(--gt-navy); width: 264px !important; min-width: 264px !important; border-right: 1px solid #1E293B; }
   [data-testid="stSidebar"] * { color: #E2E8F0; }
