@@ -10,6 +10,18 @@ The deterministic engine owns the status and confidence. Meta Muse Spark can exp
 
 ![GroundTruth overview](docs/images/home.png)
 
+> ### For judges — evaluate in 3 minutes
+> **Stage 1 (theme + Meta AI):** Built for the Meta Global AI Developer Hackathon around **Meta Muse Spark (`muse-spark-1.3`, Meta Model API — live-verified, see `docs/DELIVERY_REPORT.md`)** with a bounded, read-only **tool-calling loop**: the model requests evidence tools, every factual claim must cite a validated evidence ID, and invalid output falls back deterministically. Prefer open weights? Switch Settings → AI provider to **Llama** on any OpenAI-compatible endpoint — identical grounding guarantees. No chatbot wrapper: the model explains, deterministic code decides.
+> **Click path (offline-safe, ~3 min):** `streamlit run app.py` → **Open investigation: A — Historical owner found** → **Lineage overview** (owner, run, commit, adoption preview, Action Center) → **Evidence graph** → **AI explanation** (cited facts; regenerate live if a key is set) → **Evidence report** (download the checksummed bundle) → back on **Overview**, run the **automation sweep**. Then try **B — Multiple active owners** for the hard stop. Full narration: [`docs/DEMO.md`](docs/DEMO.md).
+>
+> | Rubric lens | Where to verify | Evidence |
+> | --- | --- | --- |
+> | Meta AI depth | AI explanation page; `groundtruth/ai/` | Tool loop with budgets/allowlist, citation validation, fallback; Llama option |
+> | Innovation | Lineage engine; scenario B/G | Exact-identity ownership graph, duplicate hard stop, cross-account guardrail — not another inventory/chatbot |
+> | Impact | Overview "Needs attention"; Action Center | Prevents duplicate-state outages; governed reattribute/retire with audit log |
+> | Technical quality | `python -m pytest -q` (140+ tests) | Deterministic statuses, checksummed exports, redaction, Docker, CI |
+> | Completeness | All 10 pages; 8 scenarios | Every terminal status covered; live mode from UI credentials; works with AI off |
+
 > **Simulated environment (default).** The console opens against the Northgate Production mirror — payloads shaped like live AWS, Scalr, GitLab, CloudTrail and CloudWatch responses (real-format ARNs, workspace/run IDs, commit SHAs, principal ARNs). No live account is queried until live mode is configured and its connection test succeeds.
 
 ## The problem
