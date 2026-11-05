@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.0 - 2026-11-05
+
+### Added
+
+- **Freshness auto-update agent:** watches the official AWS/Scalr/GitLab/Meta docs, hash-diffs them against stored baselines, auto-applies safe registry updates (re-baseline + checked_on), uses Muse Spark/Llama (when configured) to analyze drift, and drafts patch proposals for structural changes — deterministic code itself is only changed through reviewed commits.
+
+### Changed
+
+- **Midnight-glass redesign:** gradient brand and headlines, glass stat tiles, pill navigation with active glow, gradient primary actions, custom scrollbars. Overview first paint is now instant (metadata-driven; full investigations run only on demand).
+
 ## 1.3.0 - 2026-11-05
 
 Winning-features release (judge-stage aligned).

@@ -73,7 +73,7 @@ class Settings:
     project_root: Path = PROJECT_ROOT
     app_name: str = "GroundTruth"
     tagline: str = "Find the owner before you touch the resource."
-    version: str = "1.3.0"
+    version: str = "1.4.0"
     mode: str = "fixture"
     log_level: str = "INFO"
     database_url: str = "sqlite:///./groundtruth.db"

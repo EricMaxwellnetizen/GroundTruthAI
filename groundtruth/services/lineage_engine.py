@@ -1737,7 +1737,9 @@ class LineageEngine:
             "A missing record is not proof that no owner or event exists.",
         ]
         if fixture:
-            limitations.append("Simulated environment: records mirror live payload formats for the Northgate tenant; connect live credentials to investigate a real account.")
+            limitations.append(
+                "Simulated environment: records mirror live payload formats for the Northgate tenant; connect live credentials to investigate a real account."
+            )
         limitations.extend(scalr_result.warnings)
         if git_lineage:
             limitations.extend(git_lineage.limitations)
