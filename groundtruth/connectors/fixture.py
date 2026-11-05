@@ -179,7 +179,7 @@ class FixtureCaseLoader(BaseConnector):
     def _git_result_from_manifest(self, payload: dict[str, Any], manifest: dict[str, Any]) -> RepositoryLineage:
         sha = str(payload.get("sha") or manifest.get("head_sha") or "")
         commit = GitCommitEvidence(
-            repository=str(payload.get("repository") or manifest.get("repository_url") or "platform/data-pipelines"),
+            repository=str(payload.get("repository") or manifest.get("repository_url") or "northgate/data-pipelines"),
             repository_url=str(payload.get("repository_url") or manifest.get("repository_url") or REPOSITORY_URL),
             sha=sha,
             author_name=str(manifest.get("author_name") or AUTHOR_NAME),
@@ -202,7 +202,7 @@ class FixtureCaseLoader(BaseConnector):
             )
         ]
         return RepositoryLineage(
-            repository=str(payload.get("repository") or "platform/data-pipelines"),
+            repository=str(payload.get("repository") or "northgate/data-pipelines"),
             repository_url=str(payload.get("repository_url") or REPOSITORY_URL),
             working_directory=payload.get("working_directory"),
             branch=payload.get("branch") or "main",
@@ -239,7 +239,7 @@ class FixtureCaseLoader(BaseConnector):
                     name="orders-prod",
                     environment="prod",
                     active=True,
-                    vcs_repo_identifier=str(payload.get("repository") or "platform/data-pipelines"),
+                    vcs_repo_identifier=str(payload.get("repository") or "northgate/data-pipelines"),
                     working_directory=payload.get("working_directory"),
                     branch=payload.get("branch") or "main",
                     fixture=True,
@@ -280,7 +280,7 @@ class FixtureCaseLoader(BaseConnector):
             )
             return lineage, result
         lineage = RepositoryLineage(
-            repository=str(payload.get("repository") or "platform/data-pipelines"),
+            repository=str(payload.get("repository") or "northgate/data-pipelines"),
             repository_url=payload.get("repository_url"),
             working_directory=payload.get("working_directory"),
             branch=payload.get("branch"),

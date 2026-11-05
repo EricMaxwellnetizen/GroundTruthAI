@@ -32,8 +32,8 @@ def test_json_bundle_is_checksummed_and_redacted(settings, case_id: str) -> None
     assert payload["bundle_type"] == "groundtruth.evidence_bundle"
     assert payload["fixture"] is True
     assert payload["mode"] == "fixture"
-    assert "123456789012" not in text
-    assert "********9012" in text
+    assert "739201845610" not in text
+    assert "********5610" in text
     parsed = json.loads(text)
     assert parsed["integrity"]["checksum"] == bundle.integrity.checksum
 
@@ -44,10 +44,10 @@ def test_markdown_report_is_labelled_and_cites_evidence(settings, case_id: str) 
     text, bundle = export_markdown(result, redact=True)
     assert bundle.verify_checksum() is True
     assert "GroundTruth Evidence Report" in text
-    assert "DEMO / FIXTURE DATA" in text
+    assert "Simulated environment" in text
     assert result.status.value in text
     assert result.investigation_id in text
-    assert "123456789012" not in text
+    assert "739201845610" not in text
     assert "Integrity" in text
     assert "sha256:" in text
     assert "Coverage" in text
@@ -64,7 +64,7 @@ def test_redaction_can_be_disabled_for_local_analysis(settings) -> None:
     result = _result(settings, "E_current_owner")
     text, bundle = export_json(result, redact=False)
     assert bundle.redaction_applied is False
-    assert "123456789012" in text
+    assert "739201845610" in text
     assert bundle.verify_checksum() is True
 
 

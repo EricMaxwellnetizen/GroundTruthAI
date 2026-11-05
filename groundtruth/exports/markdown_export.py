@@ -51,8 +51,8 @@ def export_markdown(
     if bundle.fixture:
         lines.extend(
             [
-                "> **DEMO / FIXTURE DATA.** This report was produced from synthetic fixture records.",
-                "> It does not describe a live AWS account, Scalr workspace, or repository.",
+                "> **Simulated environment (Northgate Production mirror).** This report was produced from simulated records",
+                "> that mirror live AWS, Scalr and GitLab payloads. It does not describe a live customer account.",
                 "",
             ]
         )

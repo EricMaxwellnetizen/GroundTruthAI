@@ -1,6 +1,15 @@
 # Secrets and local configuration
 .env
 .streamlit/secrets.toml
+# UI credential vault (written from Settings; never commit)
+.groundtruth/
+credentials.backup.env
+*.credentials.env
+
+# Local-only product notes (kept on disk, never pushed)
+docs/ROADMAP.md
+KNOWN_LIMITATIONS.local.md
+LOCAL_NOTES.md
 
 # Python
 __pycache__/

@@ -17,7 +17,7 @@ from groundtruth.ui import state
 from groundtruth.utils.redaction import safe_text
 
 STAGES: list[tuple[str, str]] = [
-    ("fixture", "Fixture sources"),
+    ("fixture", "Environment"),
     ("state_backup", "Terraform state backup"),
     ("aws_lambda", "AWS Lambda"),
     ("scalr", "Scalr resource usage"),

@@ -110,6 +110,189 @@ def _test_mcp(settings: Settings) -> ConnectionTest:
     )
 
 
+def _credentials_form(settings) -> None:
+    from pathlib import Path
+
+    from groundtruth.services.credentials import CredentialVault
+
+    ui.section(
+        "Connect live environment",
+        "Paste credentials here — no file editing. Values are written to .env plus a gitignored backup (.groundtruth/credentials.backup.env) and are never displayed back.",
+    )
+    vault = CredentialVault(Path(settings.project_root))
+    status = vault.status()
+    if status:
+        st.caption(
+            "Saved: "
+            + " · ".join(
+                f"{k}={v}"
+                for k, v in sorted(status.items())
+                if "TOKEN" not in k and "KEY" not in k and "SECRET" not in k
+            )
+        )
+    with st.form("credentials_form"):
+        mode = st.selectbox(
+            "Mode",
+            ["fixture", "live"],
+            index=1 if settings.mode == "live" else 0,
+            help="Simulated (Northgate mirror) or live connectors.",
+        )
+        c1, c2 = st.columns(2)
+        with c1:
+            aws_profile = st.text_input("AWS profile (SSO/role)", value=settings.aws_profile)
+            aws_region = st.text_input("AWS region", value=settings.aws_region)
+            aws_key = st.text_input("AWS access key ID (optional)", value="")
+            aws_secret = st.text_input("AWS secret access key (optional)", value="", type="password")
+        with c2:
+            scalr_url = st.text_input(
+                "Scalr base URL", value=settings.scalr_base_url, placeholder="https://your-account.scalr.io"
+            )
+            scalr_token = st.text_input("Scalr API token (read-only)", value="", type="password")
+            scalr_filter = st.text_input("Scalr resource-usage filter", value=settings.scalr_tf_resource_usage_filter)
+            git_path = st.text_input("Local Git repo path", value=settings.git_repo_path)
+        c3, c4 = st.columns(2)
+        with c3:
+            provider = st.selectbox(
+                "AI provider",
+                ["muse_spark", "llama_open_weights"],
+                index=1 if settings.ai_provider == "llama_open_weights" else 0,
+                format_func=lambda v: (
+                    "Meta Muse Spark (hosted)" if v == "muse_spark" else "Llama — open weights (your endpoint)"
+                ),
+            )
+            meta_key = st.text_input("Meta Model API key", value="", type="password")
+            meta_model = st.text_input("Muse Spark model", value=settings.meta_model)
+        with c4:
+            llama_url = st.text_input(
+                "Llama endpoint base URL (OpenAI-compatible)",
+                value=settings.llama_api_base_url,
+                placeholder="https://…/v1",
+            )
+            llama_model = st.text_input("Llama model ID", value=settings.llama_model)
+            llama_key = st.text_input("Llama endpoint API key (if required)", value="", type="password")
+        ai_on = st.checkbox("Enable AI explanations", value=settings.ai_enabled)
+        saved = st.form_submit_button("Save credentials & switch", type="primary", width="stretch")
+    if saved:
+        updates = {
+            "GROUNDTRUTH_MODE": mode,
+            "AWS_PROFILE": aws_profile,
+            "AWS_REGION": aws_region,
+            "SCALR_BASE_URL": scalr_url,
+            "SCALR_TF_RESOURCE_USAGE_FILTER": scalr_filter,
+            "GIT_REPO_PATH": git_path,
+            "GROUNDTRUTH_AI_PROVIDER": provider,
+            "META_MODEL": meta_model,
+            "LLAMA_API_BASE_URL": llama_url,
+            "LLAMA_MODEL": llama_model,
+            "AI_ENABLED": "true" if ai_on else "false",
+        }
+        for key, value in (
+            ("AWS_ACCESS_KEY_ID", aws_key),
+            ("AWS_SECRET_ACCESS_KEY", aws_secret),
+            ("SCALR_API_TOKEN", scalr_token),
+            ("MODEL_API_KEY", meta_key),
+            ("LLAMA_API_KEY", llama_key),
+        ):
+            if value.strip():
+                updates[key] = value.strip()
+        vault.save(updates)
+        st.cache_resource.clear()
+        st.success("Credentials saved to .env (backup in .groundtruth/). Reloading with the new configuration…")
+        st.rerun()
+
+
+def _automation_and_freshness(settings) -> None:
+    from pathlib import Path
+
+    from groundtruth.services.credentials import CredentialVault
+    from groundtruth.services.freshness import FreshnessStore, check_freshness
+
+    ui.section(
+        "Automation & freshness",
+        "Governed automation prepares reattributions for resources that need attention; destructive steps always stay approval-gated.",
+    )
+    a1, a2, a3 = st.columns(3)
+    with a1:
+        auto = st.checkbox("Automation policy enabled", value=settings.automation_enabled, key="policy_auto")
+    with a2:
+        live_actions = st.checkbox(
+            "Allow live deletions (requires typed confirmation)", value=settings.allow_live_actions, key="policy_live"
+        )
+    with a3:
+        fresh_auto = st.checkbox(
+            "Auto-check connector docs freshness", value=settings.freshness_auto, key="policy_fresh"
+        )
+    if st.button("Save automation policy", key="save_policy"):
+        CredentialVault(Path(settings.project_root)).save(
+            {
+                "GROUNDTRUTH_AUTOMATION_ENABLED": "true" if auto else "false",
+                "GROUNDTRUTH_ALLOW_LIVE_ACTIONS": "true" if live_actions else "false",
+                "GROUNDTRUTH_FRESHNESS_AUTO": "true" if fresh_auto else "false",
+            }
+        )
+        st.cache_resource.clear()
+        st.success("Policy saved.")
+        st.rerun()
+    from groundtruth.services.freshness_agent import FreshnessAgent
+
+    if st.button("Run freshness agent — watch docs & auto-update", key="fresh_agent", type="primary"):
+        with st.spinner("Fetching official docs, diffing hashes, applying safe updates…"):
+            run = FreshnessAgent(Path(settings.project_root) / ".groundtruth", settings).run()
+        st.session_state["freshness_run"] = run
+    run = st.session_state.get("freshness_run")
+    if run is not None:
+        st.dataframe(
+            pd.DataFrame(
+                [
+                    {
+                        "Connector": w.connector,
+                        "Reachable": w.reachable,
+                        "Changed": w.changed,
+                        "Hash": w.current_hash or "—",
+                        "Action": w.action,
+                    }
+                    for w in run.watches
+                ]
+            ),
+            hide_index=True,
+            width="stretch",
+        )
+        for update in run.updates_applied:
+            st.success(update)
+        st.caption(
+            f"AI analysis used: {run.ai_used}. Structural code changes are drafted as a patch proposal (reviewed commit), never rewritten unattended."
+        )
+        if run.patch_proposal:
+            with st.expander("Patch proposal", expanded=False):
+                st.markdown(run.patch_proposal)
+    store = FreshnessStore(Path(settings.project_root) / ".groundtruth" / "freshness.json")
+    if st.button("Check connector freshness now", key="fresh_check"):
+        report = check_freshness(interval_days=settings.freshness_interval_days)
+        store.record(report)
+        st.session_state["freshness_report"] = report
+    report = st.session_state.get("freshness_report") or store.last()
+    if report is not None:
+        st.dataframe(
+            pd.DataFrame(
+                [
+                    {
+                        "Connector": i.connector,
+                        "Operation": i.operation,
+                        "Checked": i.checked_on,
+                        "Age (days)": i.age_days,
+                        "State": i.state,
+                    }
+                    for i in report.items
+                ]
+            ),
+            hide_index=True,
+            width="stretch",
+        )
+        st.caption(report.note)
+        with st.expander("AI review brief (paste into Muse Spark / Llama)", expanded=False):
+            st.code(report.ai_review_prompt, language=None)
+
+
 def render() -> None:
     settings = state.settings()
     ui.header(
@@ -154,7 +337,7 @@ def render() -> None:
     )
     columns = st.columns(4)
     tests = [
-        ("Fixture", "Fixture", lambda: FixtureCaseLoader(settings).test_connection()),
+        ("Fixture", "Simulated environment", lambda: FixtureCaseLoader(settings).test_connection()),
         ("AWS", "AWS Lambda", lambda: AwsLambdaConnector(settings).test_connection()),
         ("Scalr", "Scalr", lambda: ScalrConnector(settings).test_connection()),
         ("Git", "Local Git", lambda: GitLocalConnector(settings).test_connection()),
@@ -179,6 +362,9 @@ def render() -> None:
     for name, label, _factory in tests:
         with st.expander(label, expanded=False):
             _show_test(name)
+
+    _credentials_form(settings)
+    _automation_and_freshness(settings)
 
     ui.section("Reload configuration")
     st.caption(

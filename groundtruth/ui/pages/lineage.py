@@ -47,6 +47,79 @@ def _owner_card(owner: OwnershipEvidence, kind: str) -> None:
             st.caption(f"Limitation: {limitation}")
 
 
+def _action_center(result) -> None:
+    from pathlib import Path
+
+    from groundtruth.services.actions import ActionExecutor, ActionKind, plan_action
+
+    settings = state.settings()
+    ui.section(
+        "Action center",
+        "Reattribute or retire this function. Every action is planned first, needs typed confirmation, and is audit-logged.",
+    )
+    kind_label = st.radio("Action", ["Reattribute to workspace", "Delete function"], horizontal=True, key="action_kind")
+    kind = ActionKind.REATTRIBUTE if kind_label.startswith("Reattribute") else ActionKind.DELETE
+    target = ""
+    if kind == ActionKind.REATTRIBUTE:
+        known = sorted({o.workspace.name for o in [*result.current_owners, *result.historical_managers]})
+        target = (
+            st.selectbox("Target workspace", known + ["(type a workspace name)"], key="action_target_select")
+            if known
+            else ""
+        )
+        if not known or target == "(type a workspace name)":
+            target = st.text_input("Target workspace name", key="action_target_text")
+    if kind == ActionKind.REATTRIBUTE and len(result.current_owners) > 1 and target:
+        others = [o.workspace.name for o in result.current_owners if o.workspace.name != target]
+        st.info(
+            f"Resolution preview: **{target}** stays authoritative. Duplicate state bindings in {', '.join(others) or '—'} "
+            "are removed via reviewed `terraform state rm` changes (never hand-edited state), then this investigation is re-run to confirm one owner."
+        )
+    plan = plan_action(result, kind, target_workspace=target or None)
+    with st.container(border=True):
+        if not plan.eligible:
+            st.error(plan.blocked_reason or "This action is blocked.")
+        else:
+            for index, step in enumerate(plan.steps, start=1):
+                st.markdown(f"{index}. {step}")
+        st.caption(f"Mode: {result.mode} · Confirmation requires typing the function name exactly.")
+        confirmation = st.text_input(
+            "Type the function name to confirm", key="action_confirm", placeholder=result.resource.name
+        )
+        executor = ActionExecutor(
+            Path(settings.project_root) / ".groundtruth" / "action_audit.jsonl",
+            allow_live=settings.allow_live_actions,
+        )
+        if st.button("Execute action", type="primary", key="action_execute", disabled=not plan.eligible):
+            entry = executor.execute(plan, mode=result.mode, confirmation=confirmation)
+            if entry.outcome == "executed":
+                st.success(entry.detail)
+            elif entry.outcome == "runbook_issued":
+                st.info(entry.detail)
+            else:
+                st.error(entry.detail)
+        entries = executor.audit()
+        if entries:
+            st.markdown("**Audit log (latest last)**")
+            st.dataframe(
+                pd.DataFrame(
+                    [
+                        {
+                            "At": e.at.isoformat(timespec="seconds"),
+                            "Action": e.kind,
+                            "Function": e.function_name,
+                            "Mode": e.mode,
+                            "Outcome": e.outcome,
+                            "Detail": e.detail,
+                        }
+                        for e in entries
+                    ][-8:]
+                ),
+                hide_index=True,
+                width="stretch",
+            )
+
+
 def render() -> None:
     result = state.current_result()
     if result is None:
@@ -180,6 +253,33 @@ def render() -> None:
         if result.recommendation.blocked_adoption:
             st.error("Do not adopt or change this resource until the ownership conflict is resolved.")
         ui.evidence_chips(result.recommendation.evidence_ids, result=result)
+
+    from groundtruth.services.adoption import build_adoption_proposal
+
+    proposal = build_adoption_proposal(result)
+    ui.section(
+        "Adoption proposal (preview)",
+        "Deterministic import block generated from the verified identity. Preview only — nothing is applied.",
+    )
+    with st.container(border=True):
+        if not proposal.eligible:
+            st.error(proposal.blocked_reason or "Adoption is blocked for this investigation.")
+        else:
+            st.code(proposal.hcl, language="hcl")
+            with st.expander("Pre-apply checklist", expanded=False):
+                for step in proposal.checklist:
+                    st.markdown(f"- {step}")
+            st.download_button(
+                "Download .tf preview",
+                data=proposal.hcl,
+                file_name=f"{proposal.function_name}.adoption.tf",
+                mime="text/plain",
+                key="adoption_download",
+            )
+        for warning in proposal.warnings:
+            st.caption(f"Note: {warning}")
+
+    _action_center(result)
 
     gaps = result.coverage_gaps()
     if gaps:

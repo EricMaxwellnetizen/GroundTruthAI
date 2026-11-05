@@ -1,9 +1,9 @@
 {
   "case_id": "C_candidate_lineage",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "demo": true,
-  "label": "C - Candidate lineage only",
-  "summary": "No current or historical state binding exists, but a similarly named Terraform resource and a synthetic commit suggest a possible owner.",
+  "label": "C — Candidate lineage only",
+  "summary": "analytics-normalizer has no state binding. A similarly named Terraform resource (analytics-normalizer-v2) suggests a possible owner, but proves nothing.",
   "expected": {
     "status": "CANDIDATE_LINEAGE",
     "confidence": "LOW",
@@ -14,18 +14,19 @@
     "provider": "aws",
     "service": "lambda",
     "resource_type": "aws_lambda_function",
-    "account_id": "123456789012",
+    "account_id": "739201845610",
     "region": "ap-south-1",
     "name": "analytics-normalizer",
-    "arn": "arn:aws:lambda:ap-south-1:123456789012:function:analytics-normalizer",
+    "arn": "arn:aws:lambda:ap-south-1:739201845610:function:analytics-normalizer",
     "provider_id": "analytics-normalizer",
     "observed_at": "2026-11-02T06:30:00+00:00",
     "status": "Active",
     "last_modified_at": "2026-10-03T11:42:00+00:00",
     "tags": {
       "Environment": "prod",
-      "Owner": "data-platform",
-      "CostCenter": "CC-2088"
+      "Team": "data-platform",
+      "CostCenter": "CC-2088",
+      "Service": "analytics-ingest"
     },
     "safe_attributes": {
       "runtime": "python3.12",
@@ -36,6 +37,7 @@
       "architectures": ["arm64"],
       "last_update_status": "Successful",
       "version": "7",
+      "role": "arn:aws:iam::739201845610:role/analytics-normalizer-exec",
       "code_sha256": "b7c2a308ea5a0e34f1c6a5c6d10a0fdfe2d1c3b4a5f60718293a4b5c6d7e8f90",
       "environment_variable_count": 2
     },
@@ -44,13 +46,13 @@
   "aws": {"status": "success"},
   "scalr": {
     "status": "success",
-    "queried_filter": "fixture-resource-usage",
+    "queried_filter": "tf-resource-usage:aws_lambda_function",
     "resource_usages": []
   },
   "git": {
     "mode": "inline",
-    "repository": "platform/analytics-pipelines",
-    "repository_url": "https://gitlab.example.com/platform/analytics-pipelines",
+    "repository": "northgate/analytics-pipelines",
+    "repository_url": "https://gitlab.com/northgate/analytics-pipelines",
     "working_directory": "environments/prod/analytics",
     "branch": "main",
     "sha": null,
@@ -72,7 +74,7 @@
     ],
     "history_matches": [],
     "limitations": [
-      "The file mentions a similarly named function, not this exact ARN.",
+      "The file declares analytics-normalizer-v2, not this exact ARN.",
       "No commit SHA is verified for this candidate."
     ]
   },
@@ -102,5 +104,5 @@
       "fixture": true
     }
   },
-  "omni": {"configured": false, "limitations": ["No Omni link configured in fixture mode."]}
+  "omni": {"configured": false, "limitations": ["CloudWatch Omni is not enabled for this account."]}
 }

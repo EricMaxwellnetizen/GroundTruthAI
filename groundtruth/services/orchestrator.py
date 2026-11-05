@@ -33,14 +33,24 @@ class InvestigationOrchestrator:
     def __init__(self, settings: Settings | None = None) -> None:
         self.settings = settings or Settings.from_env()
         self.engine = LineageEngine(self.settings)
+        self._fixture_result_cache: dict[str, LineageResult] = {}
+        self._fixture_inventory_cache: list[CloudResource] | None = None
 
     def list_fixture_cases(self) -> list[dict[str, Any]]:
         return FixtureCaseLoader(self.settings).list_cases()
 
     def fixture_inventory(self) -> list[CloudResource]:
-        return FixtureCaseLoader(self.settings).inventory()
+        if self._fixture_inventory_cache is None:
+            self._fixture_inventory_cache = FixtureCaseLoader(self.settings).inventory()
+        return list(self._fixture_inventory_cache)
 
     def run_fixture(self, case_id: str, progress: ProgressCallback | None = None) -> LineageResult:
+        cached = self._fixture_result_cache.get(case_id)
+        if cached is not None:
+            self._safe_progress(progress, "fixture", "running", "Loading environment sources.")
+            self._safe_progress(progress, "fixture", "done", "Sources loaded (cached).")
+            self._safe_progress(progress, "correlation", "done", "Lineage correlated (cached).")
+            return cached
         self._safe_progress(progress, "fixture", "running", "Loading synthetic fixture sources.")
         case = FixtureCaseLoader(self.settings).load(case_id, progress=progress)
         self._safe_progress(progress, "fixture", "done", "Synthetic sources loaded.")
@@ -57,6 +67,7 @@ class InvestigationOrchestrator:
             mode="fixture",
         )
         self._safe_progress(progress, "correlation", "done", "Lineage correlated.")
+        self._fixture_result_cache[case_id] = result
         return result
 
     def run_live(

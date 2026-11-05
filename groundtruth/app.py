@@ -3,7 +3,7 @@ from __future__ import annotations
 import streamlit as st
 
 st.set_page_config(
-    page_title="GroundTruth",
+    page_title="GroundTruth — Cloud Lineage Console",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -40,29 +40,45 @@ PAGE_RENDERERS = {
 def _sidebar() -> None:
     settings = state.settings()
     st.sidebar.markdown(
-        '<div style="padding:0.4rem 0 0.8rem;">'
-        '<div style="font-size:0.7rem;letter-spacing:0.18em;color:#8FC9BD;font-weight:800;">GROUNDTRUTH</div>'
-        '<div style="font-family:Georgia,serif;font-size:1.55rem;font-weight:700;color:#FFFDF8;line-height:1.1;">'
-        "Find the owner<br>before you touch it.</div></div>",
+        '<div style="padding:0.6rem 0.2rem 0.9rem;">'
+        '<div style="display:flex;align-items:center;gap:0.55rem;">'
+        '<div style="width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,#0F766E,#06B6D4);display:flex;align-items:center;justify-content:center;'
+        'font-weight:850;font-size:0.95rem;color:#FFFFFF;box-shadow:0 6px 18px rgba(6,182,212,.45);">GT</div>'
+        '<div><div style="font-size:1.02rem;font-weight:750;color:#FFFFFF;line-height:1.1;">GroundTruth</div>'
+        '<div style="font-size:0.7rem;color:#94A3B8;letter-spacing:0.06em;">CLOUD LINEAGE CONSOLE</div></div></div>'
+        '<div style="margin-top:0.65rem;font-size:0.82rem;color:#CBD5E1;line-height:1.45;">Find the owner before you touch the resource.</div>'
+        "</div>",
         unsafe_allow_html=True,
     )
     st.sidebar.markdown(ui.mode_pill(settings.mode), unsafe_allow_html=True)
+    if settings.mode == "fixture":
+        st.sidebar.caption("Northgate Production (mirror) · ap-south-1")
     st.sidebar.markdown("---")
-    st.sidebar.radio("Workspace", state.PAGES, key="nav")
+    st.sidebar.markdown(
+        '<div style="font-size:0.68rem;font-weight:700;letter-spacing:0.12em;color:#64748B;margin-bottom:0.2rem;">WORKSPACE</div>',
+        unsafe_allow_html=True,
+    )
+    st.sidebar.radio("Workspace", state.PAGES, key="nav", label_visibility="collapsed")
     st.sidebar.markdown("---")
     result = state.current_result()
     if result is not None:
-        st.sidebar.markdown("**Current investigation**")
+        st.sidebar.markdown(
+            '<div style="font-size:0.68rem;font-weight:700;letter-spacing:0.12em;color:#64748B;margin-bottom:0.35rem;">ACTIVE INVESTIGATION</div>',
+            unsafe_allow_html=True,
+        )
+        st.sidebar.markdown(f"**{result.resource.name}**")
         st.sidebar.markdown(ui.status_pill(result.status.value), unsafe_allow_html=True)
-        st.sidebar.caption(f"{result.resource.name}\n\n`{result.investigation_id}`")
-        if st.sidebar.button("Clear current result", width="stretch"):
+        st.sidebar.caption(f"{result.resource.region} · {result.investigation_id}")
+        if st.sidebar.button("Clear investigation", width="stretch"):
             state.clear_result()
             st.rerun()
     else:
-        st.sidebar.caption("No investigation loaded. Start with a fixture case on Home.")
+        st.sidebar.caption("No investigation in progress. Open a scenario from Overview or start an investigation.")
     st.sidebar.markdown("---")
-    st.sidebar.caption("Read-only investigation. No apply, import, delete, invoke, or mutation tools are exposed.")
-    st.sidebar.caption(f"v{settings.version} · Fixture-first · Local SQLite metadata")
+    st.sidebar.caption(
+        "Investigations are read-only. Changes happen only in the governed Action Center — planned, confirmed, audit-logged."
+    )
+    st.sidebar.caption(f"v{settings.version} · Deterministic engine · Muse Spark advisory")
 
 
 def _flash() -> None:
@@ -92,8 +108,8 @@ def main() -> None:
     st.markdown('<hr class="gt-rule">', unsafe_allow_html=True)
     settings = state.settings()
     st.caption(
-        f"{settings.app_name} · {settings.tagline} · Deterministic engine owns status and confidence · "
-        "Muse Spark explanation is advisory · Fixture data is synthetic."
+        f"{settings.app_name} · {settings.tagline} · Status and confidence are decided by the deterministic engine; "
+        "Muse Spark explanations are advisory and cite evidence IDs."
     )
 
 

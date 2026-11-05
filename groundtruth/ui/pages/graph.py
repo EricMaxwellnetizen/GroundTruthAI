@@ -13,16 +13,16 @@ from groundtruth.ui import state
 
 NODE_COLORS = {
     "aws_lambda_function": "#0F766E",
-    "scalr_workspace": "#B45309",
-    "scalr_resource_usage": "#D97706",
+    "scalr_workspace": "#1D4ED8",
+    "scalr_resource_usage": "#2563EB",
     "scalr_run": "#7C3AED",
     "scalr_state_version": "#8B5CF6",
-    "git_repository": "#2563EB",
-    "git_commit": "#3B82F6",
-    "git_file": "#60A5FA",
-    "cloudtrail_event": "#B42318",
+    "git_repository": "#0F172A",
+    "git_commit": "#334155",
+    "git_file": "#64748B",
+    "cloudtrail_event": "#B54708",
     "cloudwatch_activity": "#0891B2",
-    "actor": "#57534E",
+    "actor": "#475467",
 }
 
 
@@ -60,11 +60,11 @@ def build_figure(graph: EvidenceGraph, show_inferred: bool) -> go.Figure:
                 name=node_type.replace("_", " "),
                 text=[_label(node.label) for node in nodes],
                 textposition="bottom center",
-                textfont=dict(size=9, color="#1C1917"),
+                textfont=dict(size=9, color="#0F172A"),
                 marker=dict(
                     size=22 if node_type == "aws_lambda_function" else 15,
                     color=color,
-                    line=dict(width=1.2, color="#FFFDF8"),
+                    line=dict(width=1.2, color="#FFFFFF"),
                 ),
                 customdata=[[node.source_evidence_id or "no evidence", str(node.attributes)] for node in nodes],
                 hovertemplate="<b>%{text}</b><br>Type: "
@@ -73,7 +73,7 @@ def build_figure(graph: EvidenceGraph, show_inferred: bool) -> go.Figure:
             )
         )
 
-    for inferred, dash, color, width in ((False, "solid", "#57534E", 1.6), (True, "dot", "#8A7F70", 1.2)):
+    for inferred, dash, color, width in ((False, "solid", "#475467", 1.6), (True, "dot", "#94A3B8", 1.2)):
         edge_x: list[float | None] = []
         edge_y: list[float | None] = []
         for edge in graph.edges:

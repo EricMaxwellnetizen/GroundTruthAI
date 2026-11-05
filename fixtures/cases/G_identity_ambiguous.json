@@ -1,0 +1,134 @@
+{
+  "case_id": "G_identity_ambiguous",
+  "version": "2.0.0",
+  "demo": true,
+  "label": "G — Identity ambiguous",
+  "summary": "A Scalr record carries the exact checkout-pricing ARN but a different AWS account. GroundTruth refuses to join across accounts and asks for a verified identity.",
+  "expected": {
+    "status": "IDENTITY_AMBIGUOUS",
+    "confidence": "UNKNOWN",
+    "recommendation": "SUPPLY_EXACT_RESOURCE_ARN",
+    "blocked_adoption": true
+  },
+  "resource": {
+    "provider": "aws",
+    "service": "lambda",
+    "resource_type": "aws_lambda_function",
+    "account_id": "739201845610",
+    "region": "ap-south-1",
+    "name": "checkout-pricing",
+    "arn": "arn:aws:lambda:ap-south-1:739201845610:function:checkout-pricing",
+    "provider_id": "checkout-pricing",
+    "observed_at": "2026-11-02T06:30:00+00:00",
+    "status": "Active",
+    "last_modified_at": "2026-10-24T16:40:00+00:00",
+    "tags": {
+      "Environment": "prod",
+      "Team": "checkout-platform",
+      "CostCenter": "CC-5120",
+      "Service": "checkout-api"
+    },
+    "safe_attributes": {
+      "runtime": "python3.13",
+      "handler": "pricing.handler",
+      "memory_size": 512,
+      "timeout": 15,
+      "package_type": "Zip",
+      "architectures": ["x86_64"],
+      "last_update_status": "Successful",
+      "version": "19",
+      "role": "arn:aws:iam::739201845610:role/checkout-pricing-exec",
+      "code_sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+      "environment_variable_count": 2
+    },
+    "fixture": true
+  },
+  "aws": {"status": "success"},
+  "scalr": {
+    "status": "success",
+    "queried_filter": "tf-resource-usage:aws_lambda_function",
+    "resource_usages": [
+      {
+        "id": "rusg-3d91f7b62e0",
+        "external_id": "arn:aws:lambda:ap-south-1:739201845610:function:checkout-pricing",
+        "address": "module.checkout.aws_lambda_function.pricing",
+        "name": "pricing",
+        "is_active": true,
+        "is_duplicate": false,
+        "updated_at": "2026-10-24T16:38:00+00:00",
+        "updated_by_email": "lena.hoffmann@northgate.io",
+        "account_id": "412889603175",
+        "region": "ap-south-1",
+        "environment": "prod",
+        "workspace": {
+          "id": "ws-k8p3m5x7q9",
+          "name": "prod-checkout-eu",
+          "environment": "prod",
+          "active": true,
+          "vcs_repo_identifier": "northgate/checkout-services",
+          "working_directory": "environments/prod/checkout",
+          "branch": "main",
+          "source_url": "https://northgate.scalr.io/environments/env-prod-01/workspaces/ws-k8p3m5x7q9",
+          "fixture": true
+        },
+        "run": {
+          "id": "run-77aa10c4e52",
+          "workspace_id": "ws-k8p3m5x7q9",
+          "status": "applied",
+          "created_at": "2026-10-24T16:35:00+00:00",
+          "source": "vcs",
+          "actor": "user:lena.hoffmann@northgate.io",
+          "vcs_revision": null,
+          "source_url": "https://northgate.scalr.io/runs/run-77aa10c4e52",
+          "attributes": {
+            "actor_category": "user",
+            "created_by_email": "lena.hoffmann@northgate.io",
+            "message": "Sync checkout pricing configuration",
+            "has_changes": true,
+            "is_destroy": false
+          },
+          "fixture": true
+        },
+        "state_version": {
+          "id": "sv-6e20b94a17",
+          "created_at": "2026-10-24T16:37:00+00:00",
+          "fixture": true
+        },
+        "fixture": true
+      }
+    ]
+  },
+  "git": null,
+  "cloudtrail": {
+    "status": "success",
+    "event_history_limited": true,
+    "events": []
+  },
+  "cloudwatch": {
+    "status": "success",
+    "activity": {
+      "window_start": "2026-10-19T00:00:00+00:00",
+      "window_end": "2026-11-02T00:00:00+00:00",
+      "period_seconds": 300,
+      "metric_namespace": "AWS/Lambda",
+      "dimensions": {"FunctionName": "checkout-pricing"},
+      "latest_nonzero_invocations_at": "2026-11-01T22:10:00+00:00",
+      "latest_nonzero_invocation_sum": 210.0,
+      "total_invocations": 96440.0,
+      "total_errors": 41.0,
+      "total_throttles": 2.0,
+      "average_duration_ms": 96.2,
+      "maximum_duration_ms": 640.0,
+      "invocation_datapoints": 672,
+      "error_datapoints": 11,
+      "throttle_datapoints": 1,
+      "no_datapoints": false,
+      "limitations": [
+        "Lambda service metrics are emitted in aggregate intervals; a metric bucket is not an exact invocation time.",
+        "No datapoint returned for a query does not prove the function is unused."
+      ],
+      "fixture": true
+    }
+  },
+  "omni": {"configured": false, "limitations": ["CloudWatch Omni is not enabled for this account."]}
+}

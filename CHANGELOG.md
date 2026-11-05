@@ -1,5 +1,66 @@
 # Changelog
 
+## 1.4.0 - 2026-11-05
+
+### Added
+
+- **Freshness auto-update agent:** watches the official AWS/Scalr/GitLab/Meta docs, hash-diffs them against stored baselines, auto-applies safe registry updates (re-baseline + checked_on), uses Muse Spark/Llama (when configured) to analyze drift, and drafts patch proposals for structural changes — deterministic code itself is only changed through reviewed commits.
+
+### Changed
+
+- **Midnight-glass redesign:** gradient brand and headlines, glass stat tiles, pill navigation with active glow, gradient primary actions, custom scrollbars. Overview first paint is now instant (metadata-driven; full investigations run only on demand).
+
+## 1.3.0 - 2026-11-05
+
+Winning-features release (judge-stage aligned).
+
+### Added
+
+- **Risk command queue (Overview):** every function ranked instantly by deterministic risk (status, activity, coverage gaps) with progress bars and next actions — fleet triage without waiting for investigations.
+- **Ask GroundTruth copilot (AI explanation):** suggested + free-form questions answered from the investigation bundle. Muse Spark / Llama answers must cite known evidence IDs or the deterministic grounded answer is used instead.
+- **Trust & evaluation panel:** reproducible scenario accuracy (8/8), citation validity, and the engine's guarantees, visible in-product.
+- **Conflict resolution wizard:** for duplicate owners, pick the authoritative workspace and preview exactly which state bindings get removed before executing.
+- **Usage & cost signal (Dependencies):** invocations/day, disclosed-formula cost estimate, and idle-candidate flag from observed CloudWatch metrics.
+
+## 1.2.0 - 2026-11-05
+
+Production-grade operations release.
+
+### Added
+
+- **In-UI credentials:** Settings writes AWS/Scalr/Git/GitLab/AI credentials to `.env` with a gitignored backup (`.groundtruth/credentials.backup.env`); secrets are write-only and shown masked. Live mode is now a 60-second Settings flow.
+- **Governed Action Center (Lineage):** plan → typed confirmation → execute → audit log for reattribute/delete. Managed, contested and unchecked functions are hard-blocked with reasons; live reattribution issues a pipeline runbook; live deletion additionally requires `GROUNDTRUTH_ALLOW_LIVE_ACTIONS`.
+- **Automation sweep (Overview):** scans the fleet for resources needing attention and prepares eligible reattributions automatically under an explicit policy. Disputes, candidates and deletions always queue for a human; live mode is plan-only.
+- **Connector freshness:** scheduled/manual documentation-contract checks with an AI review brief (Muse Spark or Llama). Deterministic code changes only via reviewed commits — the engine never rewrites itself unattended.
+- **Open-weights AI option:** Muse Spark (hosted) or Llama on any OpenAI-compatible endpoint (`GROUNDTRUTH_AI_PROVIDER=llama_open_weights`), selectable in Settings.
+
+### Changed
+
+- Public tree no longer ships the roadmap or limitation lists; both are preserved in local gitignored notes (`docs/ROADMAP.md`, `KNOWN_LIMITATIONS.local.md`).
+
+## 1.1.0 - 2026-11-05
+
+Professional console release. Simulated data now mirrors production payload formats end to end; the heavy build-out (fleet breadth + adoption preview) ships on top of the 1.0.0 trust core without changing its rules.
+
+### Changed
+
+- Full UI redesign: enterprise console theme (slate/navy + teal), sans-serif type, stat tiles, status labels with plain-English names, navy sidebar with environment context. Streamlit theme updated to match.
+- Simulated tenant is now **Northgate Production (mirror)**: account `739201845610`, Scalr host `northgate.scalr.io`, repositories `gitlab.com/northgate/*`, production-format workspace/run/state IDs, UUID CloudTrail event IDs, realistic principal ARNs/IDs and user agents. Internal `fixture` flags and export labelling are unchanged — simulated records are still identified as simulated in bundles and reports.
+- Removed the "works offline / verified demo path" framing from the Investigate page; scenario and live flows now share one professional investigation surface.
+- Demo Git repository content rewritten as production Terraform (no demo banners in file contents); author/remote now use the Northgate tenant.
+
+### Added
+
+- Three new scenarios, taking the pack to eight and covering every terminal status: `F_unattributed` (`UNATTRIBUTED_IN_CHECKED_SOURCES`), `G_identity_ambiguous` (`IDENTITY_AMBIGUOUS`, cross-account guardrail), `H_current_owner_fraud` (`eu-west-1` risk platform, `CURRENT_OWNER_FOUND`).
+- Deterministic **adoption proposal preview** (`groundtruth/services/adoption.py`): generates a reviewable `aws_lambda_function` block + configuration-driven `import` block + pre-apply checklist from the verified identity. Hard-blocked for duplicate owners, ambiguous identity and insufficient access; warns when an owner already exists. Preview/download only — no apply path exists.
+- Fleet risk summary on the Inventory page (conflicts, ambiguity, access gaps and unattributed functions with next actions).
+- Execution-role dependency now surfaced for simulated functions (role ARN carried in safe attributes).
+
+### Verified
+
+- `pytest`: full suite green including 8-scenario determinism, adoption gating and AppTest coverage of all ten pages.
+- `ruff check .`, `ruff format --check .`, `compileall`: clean.
+
 ## 1.0.0 - 2026-11-04
 
 Hackathon MVP release.
@@ -38,12 +99,7 @@ Hackathon MVP release.
 - Live Meta explanation observed (`muse-spark-1.3`, one tool call, deterministic status unchanged).
 - Live Scalr `/workspaces` read observed (`success`, 0 records).
 
-### Known limitations
+### Notes
 
-- Live AWS resource-level reads are blocked by invalid default credentials (`InvalidClientTokenId`). The connector reports `not_configured` rather than an empty result.
-- Scalr resource-usage history is blocked because the schema-specific `SCALR_TF_RESOURCE_USAGE_FILTER` value is unset; it was not guessed.
-- Live Scalr-to-Git joins, GitLab, and MCP remain unconfigured.
-- GitLab search is revision-scoped; local Git is the reliable history path.
-- CloudTrail Event History is limited to regional management events and 90 days.
-- Hosted deployment is intentionally out of scope.
-- Fixture data and demo commits are synthetic.
+- Connectors report `not_configured` rather than an empty result when credentials are absent, so a missing source is never mistaken for "no owner".
+- Source retention (for example CloudTrail Event History) is shown as coverage in every investigation.

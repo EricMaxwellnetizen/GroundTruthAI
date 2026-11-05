@@ -18,13 +18,13 @@ from groundtruth.services.state_backup import (
     select_state_backup_match,
 )
 
-ARN = "arn:aws:lambda:ap-south-1:123456789012:function:orders-transformer"
-ROLE = "arn:aws:iam::123456789012:role/orders-transformer-role"
+ARN = "arn:aws:lambda:ap-south-1:739201845610:function:orders-transformer"
+ROLE = "arn:aws:iam::739201845610:role/orders-transformer-role"
 
 
 def _resource(arn: str | None = ARN, name: str = "orders-transformer") -> CloudResource:
     return CloudResource(
-        account_id="123456789012",
+        account_id="739201845610",
         region="ap-south-1",
         name=name,
         arn=arn,
@@ -127,7 +127,7 @@ def test_selection_prefers_exact_arn_and_rejects_conflicts() -> None:
     selected = select_state_backup_match(backup, _resource())
     assert selected is not None
     assert selected[1] == MatchType.EXACT_ARN
-    conflict = _resource(arn=ARN.replace("123456789012", "999999999999"))
+    conflict = _resource(arn=ARN.replace("739201845610", "999999999999"))
     assert select_state_backup_match(backup, conflict) is None
     name_only = select_state_backup_match(backup, _resource(arn=None))
     assert name_only is not None
@@ -219,7 +219,7 @@ def test_state_backup_is_exported_and_redacted(settings) -> None:
     text, bundle = export_json(result, redact=True)
     assert bundle.state_backup is not None
     assert bundle.verify_checksum()
-    assert "123456789012" not in text
+    assert "739201845610" not in text
     assert '"state_backup"' in text
     assert "environment-secret" not in text
     assert "output-secret" not in text
