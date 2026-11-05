@@ -75,7 +75,9 @@ def _sidebar() -> None:
     else:
         st.sidebar.caption("No investigation in progress. Open a scenario from Overview or start an investigation.")
     st.sidebar.markdown("---")
-    st.sidebar.caption("Investigations are read-only. Changes happen only in the governed Action Center — planned, confirmed, audit-logged.")
+    st.sidebar.caption(
+        "Investigations are read-only. Changes happen only in the governed Action Center — planned, confirmed, audit-logged."
+    )
     st.sidebar.caption(f"v{settings.version} · Deterministic engine · Muse Spark advisory")
 
 
